@@ -58,6 +58,13 @@ public interface ResourceLoader {
 	 * </ul>
 	 * <p>Note that a Resource handle does not imply an existing resource;
 	 * you need to invoke {@link Resource#exists} to check for existence.
+	 *
+	 * 根据 resource 路径返回资源实例，不保证资源实例一定存在
+	 *
+	 * URL 位置资源，如 "file:C:/test.dat"
+	 * ClassPath 位置资源，如 "classpath:test.dat
+	 * 相对路径资源，如 "WEB-INF/test.dat" ，此时返回的 Resource 实例，根据实现不同而不同
+	 *
 	 * @param location the resource location
 	 * @return a corresponding Resource handle (never {@code null})
 	 * @see #CLASSPATH_URL_PREFIX

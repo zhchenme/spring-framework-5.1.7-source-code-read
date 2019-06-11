@@ -16,6 +16,7 @@
 
 package org.springframework.core.io;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
@@ -59,6 +60,9 @@ public class DefaultResourceLoader implements ResourceLoader {
 	 * Create a new DefaultResourceLoader.
 	 * <p>ClassLoader access will happen using the thread context class loader
 	 * at the time of this ResourceLoader's initialization.
+	 *
+	 * 初始化类加载器
+	 *
 	 * @see java.lang.Thread#getContextClassLoader()
 	 */
 	public DefaultResourceLoader() {
@@ -71,6 +75,7 @@ public class DefaultResourceLoader implements ResourceLoader {
 	 * for using the thread context class loader at the time of actual resource access
 	 */
 	public DefaultResourceLoader(@Nullable ClassLoader classLoader) {
+		// 初始化指定的类加载器
 		this.classLoader = classLoader;
 	}
 
@@ -140,10 +145,19 @@ public class DefaultResourceLoader implements ResourceLoader {
 	}
 
 
+	/**
+	 * TODO：important 子类均使用该方法获取 Resource 实例
+	 *
+	 * 该方法只会返回 ClassPathContextResource、ClassPathResource、FileUrlResource、UrlResource 四种类型的资源
+	 *
+	 * @param location the resource location
+	 * @return
+	 */
 	@Override
 	public Resource getResource(String location) {
 		Assert.notNull(location, "Location must not be null");
 
+		// ProtocolResolvers 是一个接口，没有实现类，允许用户定制
 		for (ProtocolResolver protocolResolver : this.protocolResolvers) {
 			Resource resource = protocolResolver.resolve(location, this);
 			if (resource != null) {
@@ -151,20 +165,24 @@ public class DefaultResourceLoader implements ResourceLoader {
 			}
 		}
 
+		// 以 '/' 开头，返回 ClassPathContextResource 实例
 		if (location.startsWith("/")) {
 			return getResourceByPath(location);
 		}
+		// 以 'classpath:'开头，返回 ClassPathResource 实例
 		else if (location.startsWith(CLASSPATH_URL_PREFIX)) {
 			return new ClassPathResource(location.substring(CLASSPATH_URL_PREFIX.length()), getClassLoader());
 		}
 		else {
 			try {
 				// Try to parse the location as a URL...
+				// 以 URL 的方式解析资源
 				URL url = new URL(location);
 				return (ResourceUtils.isFileURL(url) ? new FileUrlResource(url) : new UrlResource(url));
 			}
 			catch (MalformedURLException ex) {
 				// No URL -> resolve as resource path.
+				// 当出现异常时，返回 ClassPathContextResource 实例
 				return getResourceByPath(location);
 			}
 		}
@@ -175,6 +193,10 @@ public class DefaultResourceLoader implements ResourceLoader {
 	 * <p>The default implementation supports class path locations. This should
 	 * be appropriate for standalone implementations but can be overridden,
 	 * e.g. for implementations targeted at a Servlet container.
+	 *
+	 * 该方法在子类中会重写，以返回对应的资源对象
+	 * 子类可以重写该方法返回自身相关的资源类型
+	 *
 	 * @param path the path to the resource
 	 * @return the corresponding Resource handle
 	 * @see ClassPathResource
@@ -208,4 +230,25 @@ public class DefaultResourceLoader implements ResourceLoader {
 		}
 	}
 
+	/**
+	 * 使用不同的加载器加载资源，会返回不同的资源对象
+	 *
+	 * @param args
+	 * @throws IOException
+	 */
+	public static void main(String[] args) throws IOException {
+		ResourceLoader resourceLoader = new DefaultResourceLoader();
+		Resource fileResource1 = resourceLoader.getResource("/Users/lanxiang/1img/java.jpeg");
+		System.out.println(fileResource1.getDescription());
+		System.out.println("fileResource2 is ClassPathResource:" + (fileResource1 instanceof ClassPathResource));
+
+		Resource urlResource2 = resourceLoader.getResource("http://www.baidu.com");
+		System.out.println(urlResource2.getURL());
+		System.out.println("urlResource1 is urlResource:" + (urlResource2 instanceof  UrlResource));
+
+		ResourceLoader fileSystemResourceLoader = new FileSystemResourceLoader();
+		Resource fileSystemResource = fileSystemResourceLoader.getResource("/Users/lanxiang/1img/java.jpeg");
+		System.out.println(fileSystemResource.getDescription());
+		System.out.println("fileSystemResource is FileSystemResource:" + (fileSystemResource instanceof FileSystemResource));
+	}
 }

@@ -81,7 +81,9 @@ public class ClassPathResource extends AbstractFileResolvingResource {
 		if (pathToUse.startsWith("/")) {
 			pathToUse = pathToUse.substring(1);
 		}
+		// 经过处理的 path
 		this.path = pathToUse;
+		// 初始化类加载器
 		this.classLoader = (classLoader != null ? classLoader : ClassUtils.getDefaultClassLoader());
 	}
 

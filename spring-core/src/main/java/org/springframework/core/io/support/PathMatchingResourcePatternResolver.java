@@ -212,6 +212,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 * @see org.springframework.core.io.DefaultResourceLoader
 	 */
 	public PathMatchingResourcePatternResolver() {
+		// 初始化资源加载器
 		this.resourceLoader = new DefaultResourceLoader();
 	}
 
@@ -223,6 +224,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 */
 	public PathMatchingResourcePatternResolver(ResourceLoader resourceLoader) {
 		Assert.notNull(resourceLoader, "ResourceLoader must not be null");
+		// 初始化指定的资源加载器
 		this.resourceLoader = resourceLoader;
 	}
 
@@ -271,23 +273,28 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 
 	@Override
 	public Resource getResource(String location) {
+		// 获取资源加载器（DefaultResourceLoader）加载资源
 		return getResourceLoader().getResource(location);
 	}
 
 	@Override
 	public Resource[] getResources(String locationPattern) throws IOException {
 		Assert.notNull(locationPattern, "Location pattern must not be null");
+		// 判断是否以 'classpath*:' 开头，如果是可能返回多个资源实例
 		if (locationPattern.startsWith(CLASSPATH_ALL_URL_PREFIX)) {
 			// a class path resource (multiple resources for same name possible)
+			// 以 '*' 和 '?' 判断指定的资源路径，substring(index) 方法用于从指定的位置向后截取字符串
 			if (getPathMatcher().isPattern(locationPattern.substring(CLASSPATH_ALL_URL_PREFIX.length()))) {
 				// a class path resource pattern
 				return findPathMatchingResources(locationPattern);
 			}
+			// 以 'classpath*:' 开头，但是不包含 '*' 和 '?' 通配符
 			else {
 				// all class path resources with the given name
 				return findAllClassPathResources(locationPattern.substring(CLASSPATH_ALL_URL_PREFIX.length()));
 			}
 		}
+		// 不以 'classpath*:' 开头，返回一个资源实例，用数组封装后返回
 		else {
 			// Generally only look for a pattern after a prefix here,
 			// and on Tomcat only after the "*/" separator for its "war:" protocol.
@@ -304,6 +311,10 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 		}
 	}
 
+	public static void main(String[] args) {
+		System.out.println("classpath*:restclasspath*:gfdgg".substring("classpath*:".length()));
+	}
+
 	/**
 	 * Find all class location resources with the given location via the ClassLoader.
 	 * Delegates to {@link #doFindAllClassPathResources(String)}.
@@ -315,6 +326,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 */
 	protected Resource[] findAllClassPathResources(String location) throws IOException {
 		String path = location;
+		// 以 '/' 开头截取对应的字符串
 		if (path.startsWith("/")) {
 			path = path.substring(1);
 		}
@@ -335,11 +347,14 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	protected Set<Resource> doFindAllClassPathResources(String path) throws IOException {
 		Set<Resource> result = new LinkedHashSet<>(16);
 		ClassLoader cl = getClassLoader();
+		// 根据类加载器加载路径下所有资源的 URL
 		Enumeration<URL> resourceUrls = (cl != null ? cl.getResources(path) : ClassLoader.getSystemResources(path));
+		// 将 URL 对象转换成 UrlResource 对象
 		while (resourceUrls.hasMoreElements()) {
 			URL url = resourceUrls.nextElement();
 			result.add(convertClassLoaderURL(url));
 		}
+		// 加载 jar 包文件
 		if ("".equals(path)) {
 			// The above result is likely to be incomplete, i.e. only containing file system references.
 			// We need to have pointers to each of the jar files on the classpath as well...
@@ -489,13 +504,16 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 * @see org.springframework.util.PathMatcher
 	 */
 	protected Resource[] findPathMatchingResources(String locationPattern) throws IOException {
+		// 确定根路径与子路径
 		String rootDirPath = determineRootDir(locationPattern);
 		String subPattern = locationPattern.substring(rootDirPath.length());
+		// 递归获取根路径下的资源
 		Resource[] rootDirResources = getResources(rootDirPath);
 		Set<Resource> result = new LinkedHashSet<>(16);
 		for (Resource rootDirResource : rootDirResources) {
 			rootDirResource = resolveRootDirResource(rootDirResource);
 			URL rootDirUrl = rootDirResource.getURL();
+			// 处理 bundle 类型资源
 			if (equinoxResolveMethod != null && rootDirUrl.getProtocol().startsWith("bundle")) {
 				URL resolvedUrl = (URL) ReflectionUtils.invokeMethod(equinoxResolveMethod, null, rootDirUrl);
 				if (resolvedUrl != null) {
@@ -503,9 +521,11 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 				}
 				rootDirResource = new UrlResource(rootDirUrl);
 			}
+			// 处理 vfs 类型资源
 			if (rootDirUrl.getProtocol().startsWith(ResourceUtils.URL_PROTOCOL_VFS)) {
 				result.addAll(VfsResourceMatchingDelegate.findMatchingResources(rootDirUrl, subPattern, getPathMatcher()));
 			}
+			// 处理 jar 类型资源
 			else if (ResourceUtils.isJarURL(rootDirUrl) || isJarResource(rootDirResource)) {
 				result.addAll(doFindPathMatchingJarResources(rootDirResource, rootDirUrl, subPattern));
 			}
@@ -527,11 +547,19 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 * remainder of the location as pattern.
 	 * <p>Will return "/WEB-INF/" for the pattern "/WEB-INF/*.xml",
 	 * for example.
+	 *
+	 * 确定根目录
+	 *
+	 *
+	 *
 	 * @param location the location to check
 	 * @return the part of the location that denotes the root directory
 	 * @see #retrieveMatchingFiles
 	 */
+	// "classpath*:test/cc*/spring-*.xml" -> "classpath*:test/"
+	// "classpath*:test/aa/spring-*.xml" -> "classpath*:test/aa/"
 	protected String determineRootDir(String location) {
+		// 找到 : 所在的位置
 		int prefixEnd = location.indexOf(':') + 1;
 		int rootDirEnd = location.length();
 		while (rootDirEnd > prefixEnd && getPathMatcher().isPattern(location.substring(prefixEnd, rootDirEnd))) {

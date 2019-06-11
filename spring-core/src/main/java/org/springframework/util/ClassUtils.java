@@ -170,6 +170,14 @@ public abstract class ClassUtils {
 	 * for example, for class path resource loading (but not necessarily for
 	 * {@code Class.forName}, which accepts a {@code null} ClassLoader
 	 * reference as well).
+	 *
+	 * 通常这三种方法获取的类加载器是同一个类加载器，也就是应用程序（系统）类加载器
+	 * 		   System.out.println(Thread.currentThread().getContextClassLoader());
+	 *         System.out.println(this.getClass().getClassLoader());
+	 *         System.out.println(ClassLoader.getSystemClassLoader());
+	 *         // 扩展类加载器
+	 *         System.out.println(ClassLoader.getSystemClassLoader().getParent());
+	 *
 	 * @return the default ClassLoader (only {@code null} if even the system
 	 * ClassLoader isn't accessible)
 	 * @see Thread#getContextClassLoader()
@@ -179,6 +187,7 @@ public abstract class ClassUtils {
 	public static ClassLoader getDefaultClassLoader() {
 		ClassLoader cl = null;
 		try {
+			// 线程上下文类加载器->（应用程序类加载器、系统类加载器）
 			cl = Thread.currentThread().getContextClassLoader();
 		}
 		catch (Throwable ex) {
@@ -186,10 +195,12 @@ public abstract class ClassUtils {
 		}
 		if (cl == null) {
 			// No thread context class loader -> use class loader of this class.
+			// 根据当前类获取类加载器
 			cl = ClassUtils.class.getClassLoader();
 			if (cl == null) {
 				// getClassLoader() returning null indicates the bootstrap ClassLoader
 				try {
+					// 获取系统类加载器
 					cl = ClassLoader.getSystemClassLoader();
 				}
 				catch (Throwable ex) {

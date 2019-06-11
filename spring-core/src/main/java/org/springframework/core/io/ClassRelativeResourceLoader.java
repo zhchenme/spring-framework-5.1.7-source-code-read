@@ -39,6 +39,7 @@ public class ClassRelativeResourceLoader extends DefaultResourceLoader {
 	 */
 	public ClassRelativeResourceLoader(Class<?> clazz) {
 		Assert.notNull(clazz, "Class must not be null");
+		// 可以根据当前类的相对路径加载资源
 		this.clazz = clazz;
 		setClassLoader(clazz.getClassLoader());
 	}

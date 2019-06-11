@@ -47,6 +47,8 @@ public abstract class AbstractResource implements Resource {
 	 * This implementation checks whether a File can be opened,
 	 * falling back to whether an InputStream can be opened.
 	 * This will cover both directories and content resources.
+	 *
+	 * 判断文件是否存在，抛出异常时会关闭流
 	 */
 	@Override
 	public boolean exists() {
@@ -94,6 +96,8 @@ public abstract class AbstractResource implements Resource {
 	/**
 	 * This implementation throws a FileNotFoundException, assuming
 	 * that the resource cannot be resolved to a URL.
+	 *
+	 * 抛出异常，让子类实现
 	 */
 	@Override
 	public URL getURL() throws IOException {
@@ -146,6 +150,7 @@ public abstract class AbstractResource implements Resource {
 		InputStream is = getInputStream();
 		try {
 			long size = 0;
+			// 定义一个 256 byte 的缓冲区
 			byte[] buf = new byte[256];
 			int read;
 			while ((read = is.read(buf)) != -1) {
@@ -155,6 +160,7 @@ public abstract class AbstractResource implements Resource {
 		}
 		finally {
 			try {
+				// 关闭流
 				is.close();
 			}
 			catch (IOException ex) {
@@ -193,6 +199,8 @@ public abstract class AbstractResource implements Resource {
 	/**
 	 * This implementation throws a FileNotFoundException, assuming
 	 * that relative resources cannot be created for this resource.
+	 *
+	 * 抛出异常，让子类实现
 	 */
 	@Override
 	public Resource createRelative(String relativePath) throws IOException {
@@ -216,12 +224,16 @@ public abstract class AbstractResource implements Resource {
 	 */
 	@Override
 	public boolean equals(Object other) {
+		// 引用相同，或者资源的描述相同，则 equals 方法返回 true
 		return (this == other || (other instanceof Resource &&
 				((Resource) other).getDescription().equals(getDescription())));
 	}
 
 	/**
 	 * This implementation returns the description's hash code.
+	 *
+	 * 返回文件描述的哈希值
+	 *
 	 * @see #getDescription()
 	 */
 	@Override
@@ -231,6 +243,9 @@ public abstract class AbstractResource implements Resource {
 
 	/**
 	 * This implementation returns the description of this resource.
+	 *
+	 * 返回文件描述
+	 *
 	 * @see #getDescription()
 	 */
 	@Override
