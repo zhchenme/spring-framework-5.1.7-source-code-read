@@ -111,6 +111,7 @@ public class PathMatchingResourcePatternResolverTests {
 		Resource[] resources = resolver.getResources("classpath*:*.dtd");
 		boolean found = false;
 		for (Resource resource : resources) {
+			System.out.println(resource.getFilename());
 			if (resource.getFilename().equals("aspectj_1_5_0.dtd")) {
 				found = true;
 			}

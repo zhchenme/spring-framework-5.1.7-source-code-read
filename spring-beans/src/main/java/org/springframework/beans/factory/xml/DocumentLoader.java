@@ -32,13 +32,13 @@ public interface DocumentLoader {
 
 	/**
 	 * Load a {@link Document document} from the supplied {@link InputSource source}.
-	 * @param inputSource the source of the document that is to be loaded
-	 * @param entityResolver the resolver that is to be used to resolve any entities
-	 * @param errorHandler used to report any errors during document loading
-	 * @param validationMode the type of validation
+	 * @param inputSource the source of the document that is to be loaded                     文件资源
+	 * @param entityResolver the resolver that is to be used to resolve any entities          解析器
+	 * @param errorHandler used to report any errors during document loading                  处理错误
+	 * @param validationMode the type of validation                                           验证模式
 	 * {@link org.springframework.util.xml.XmlValidationModeDetector#VALIDATION_DTD DTD}
 	 * or {@link org.springframework.util.xml.XmlValidationModeDetector#VALIDATION_XSD XSD})
-	 * @param namespaceAware {@code true} if support for XML namespaces is to be provided
+	 * @param namespaceAware {@code true} if support for XML namespaces is to be provided     命名空间支持，如果要提供对 XML 名称空间的支持，则需要值为 true
 	 * @return the loaded {@link Document document}
 	 * @throws Exception if an error occurs
 	 */

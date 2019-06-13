@@ -82,6 +82,9 @@ public class XmlValidationModeDetector {
 	/**
 	 * Detect the validation mode for the XML document in the supplied {@link InputStream}.
 	 * Note that the supplied {@link InputStream} is closed by this method before returning.
+	 *
+	 * 检验 xml 文件的验证模式
+	 *
 	 * @param inputStream the InputStream to parse
 	 * @throws IOException in case of I/O failure
 	 * @see #VALIDATION_DTD
@@ -93,15 +96,20 @@ public class XmlValidationModeDetector {
 		try {
 			boolean isDtdValidated = false;
 			String content;
+			// 读取 xml 文件，每次读取一行数据
 			while ((content = reader.readLine()) != null) {
+				// 处理 xml 文件中的注释内容
 				content = consumeCommentTokens(content);
 				if (this.inComment || !StringUtils.hasText(content)) {
 					continue;
 				}
+				// 判断是否包含了 'DOCTYPE' DTD 约束，如果包含表明是 DTD 约束，直接结束循环
 				if (hasDoctype(content)) {
 					isDtdValidated = true;
 					break;
 				}
+				// 如果这一行有 < ，并且 < 后面跟着的是字母 则结束循环
+				// TODO 不太明白这里什么意思
 				if (hasOpeningTag(content)) {
 					// End of meaningful data...
 					break;
@@ -122,6 +130,9 @@ public class XmlValidationModeDetector {
 
 	/**
 	 * Does the content contain the DTD DOCTYPE declaration?
+	 *
+	 * 判断 xml 文件是否包含 'DOCTYPE'
+	 * <!DOCTYPE beans PUBLIC  "-//SPRING//DTD BEAN//EN"  "http://www.springframework.org/dtd/spring-beans.dtd">
 	 */
 	private boolean hasDoctype(String content) {
 		return content.contains(DOCTYPE);
@@ -149,6 +160,7 @@ public class XmlValidationModeDetector {
 	 */
 	@Nullable
 	private String consumeCommentTokens(String line) {
+		// 如果该行数据不是注释，直接返回
 		if (!line.contains(START_COMMENT) && !line.contains(END_COMMENT)) {
 			return line;
 		}

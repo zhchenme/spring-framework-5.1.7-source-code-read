@@ -47,6 +47,7 @@ public class ResourcePropertySourceTests {
 	@Test
 	public void withLocationAndGeneratedName() throws IOException {
 		PropertySource<?> ps = new ResourcePropertySource(PROPERTIES_LOCATION);
+		System.out.println(ps.getProperty("foo"));
 		assertEquals("bar", ps.getProperty("foo"));
 		assertThat(ps.getName(), is(PROPERTIES_RESOURCE_DESCRIPTION));
 	}
