@@ -104,7 +104,9 @@ public abstract class BeanDefinitionReaderUtils {
 			BeanDefinition definition, BeanDefinitionRegistry registry, boolean isInnerBean)
 			throws BeanDefinitionStoreException {
 
+		// 从 BeanDefinition 中获取 className 属性
 		String generatedBeanName = definition.getBeanClassName();
+		// 如果没有定义，获取 parentName$child 作为 beanName，如果没有 parentName 则使用 factoryBeanName
 		if (generatedBeanName == null) {
 			if (definition.getParentName() != null) {
 				generatedBeanName = definition.getParentName() + "$child";
@@ -113,6 +115,7 @@ public abstract class BeanDefinitionReaderUtils {
 				generatedBeanName = definition.getFactoryBeanName() + "$created";
 			}
 		}
+		// 如果仍然没有可使用的 beanName 则抛出异常
 		if (!StringUtils.hasText(generatedBeanName)) {
 			throw new BeanDefinitionStoreException("Unnamed bean definition specifies neither " +
 					"'class' nor 'parent' nor 'factory-bean' - can't generate bean name");
@@ -121,6 +124,7 @@ public abstract class BeanDefinitionReaderUtils {
 		String id = generatedBeanName;
 		if (isInnerBean) {
 			// Inner bean: generate identity hashcode suffix.
+			// beanName + # + definition 哈希值的十六进制表示形式
 			id = generatedBeanName + GENERATED_BEAN_NAME_SEPARATOR + ObjectUtils.getIdentityHexString(definition);
 		}
 		else {
@@ -162,10 +166,12 @@ public abstract class BeanDefinitionReaderUtils {
 			throws BeanDefinitionStoreException {
 
 		// Register bean definition under primary name.
+		// 获取 beanName 并根据 beanName 注册 BeanDefinition
 		String beanName = definitionHolder.getBeanName();
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
 
 		// Register aliases for bean name, if any.
+		// 获取所有的别名，并根据 beanName 注册别名
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {
 			for (String alias : aliases) {
