@@ -759,9 +759,18 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				new BeanDefinitionHolder(mbd, beanName, getAliases(beanDefinitionName)), descriptor);
 	}
 
+	/**
+	 * 根据 beanName 获取对应的 beanDefinition
+	 *
+	 * @param beanName name of the bean to find a definition for
+	 * @return
+	 * @throws NoSuchBeanDefinitionException
+	 */
 	@Override
 	public BeanDefinition getBeanDefinition(String beanName) throws NoSuchBeanDefinitionException {
+		// 从 beanDefinitionMap 中根据 beanName 获取对应的 beanDefinition
 		BeanDefinition bd = this.beanDefinitionMap.get(beanName);
+		// 不存在抛出异常
 		if (bd == null) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("No bean named '" + beanName + "' found in " + this);
