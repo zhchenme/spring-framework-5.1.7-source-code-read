@@ -170,6 +170,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	private final Set<String> alreadyCreated = Collections.newSetFromMap(new ConcurrentHashMap<>(256));
 
 	/** Names of beans that are currently in creation. */
+	/**
+	 * 存储 beanName
+	 */
 	private final ThreadLocal<Object> prototypesCurrentlyInCreation =
 			new NamedThreadLocal<>("Prototype beans currently in creation");
 
@@ -268,6 +271,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
+			// TODO
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 
@@ -281,7 +285,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			 * 对于单例( Singleton )模式， Spring 在创建 Bean 的时候并不是等 Bean 完全创建完成后才会将 Bean 添加至缓存中，
 			 * 而是不等 Bean 创建完成就会将创建 Bean 的 ObjectFactory 提早加入到缓存中，这样一旦下一个 Bean 创建的时候需要依赖 bean 时则直接使用 ObjectFactory
 			 *
-			 * 但是原型( Prototype )模式，我们知道是没法使用缓存的，所以 Spring 对原型模式的循环依赖处理策略则是不处理。
+			 * 但是原型( Prototype )模式，我们知道是没法使用缓存的，所以 Spring 对原型模式的循环依赖处理策略则是不处理
+			 *
+			 * Spring 只能解决单例模式的循环依赖，如果原型模式下存在循环依赖，则抛出异常
 			 */
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(beanName);
@@ -291,8 +297,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			// 如果容器中没有找到，则从父类容器中加载
 			// TODO
 			BeanFactory parentBeanFactory = getParentBeanFactory();
+			// parentBeanFactory 不为空且 beanDefinitionMap 中不存在该 name 的 BeanDefinition
 			if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 				// Not found -> check parent.
+				// 获取原始的 beanName
 				String nameToLookup = originalBeanName(name);
 				// 如果，父类容器为 AbstractBeanFactory ，直接递归查找返回
 				if (parentBeanFactory instanceof AbstractBeanFactory) {
@@ -340,7 +348,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 									"Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
-						// TODO
+						// 注入依赖的 bean，我依赖你，你被我依赖都需要被记下，存储在两个 map 中
 						registerDependentBean(dep, beanName);
 						try {
 							getBean(dep);
@@ -358,7 +366,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				 * 不同的作用域会有不同的初始化策略
 				 */
 				// 实例化 bean
-				// 如果是单例模式
+				// 如果是单例模式，因为刚开始是从单例缓存中获取，如果缓存中不存在，则需要从头开始加载
 				if (mbd.isSingleton()) {
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
@@ -1079,6 +1087,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Return whether the specified prototype bean is currently in creation
 	 * (within the current thread).
+	 *
+	 * 判断原型模式下 bean 在创建的过程中是否存在循环依赖
+	 *
 	 * @param beanName the name of the bean
 	 */
 	protected boolean isPrototypeCurrentlyInCreation(String beanName) {
