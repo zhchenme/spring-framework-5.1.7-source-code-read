@@ -1201,6 +1201,7 @@ public abstract class ClassUtils {
 		Assert.notNull(clazz, "Class must not be null");
 		Assert.notNull(methodName, "Method name must not be null");
 		int count = 0;
+		// 通过反射获取所有的方法
 		Method[] declaredMethods = clazz.getDeclaredMethods();
 		for (Method method : declaredMethods) {
 			if (methodName.equals(method.getName())) {
@@ -1208,6 +1209,7 @@ public abstract class ClassUtils {
 			}
 		}
 		Class<?>[] ifcs = clazz.getInterfaces();
+		// 如果有实现接口或者继承，递归判断
 		for (Class<?> ifc : ifcs) {
 			count += getMethodCountForName(ifc, methodName);
 		}

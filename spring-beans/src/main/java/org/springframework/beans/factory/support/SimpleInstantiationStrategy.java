@@ -57,6 +57,7 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 	}
 
 
+	// TODO
 	@Override
 	public Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner) {
 		// Don't override the class with CGLIB if no overrides.
@@ -139,6 +140,7 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 
 		try {
 			if (System.getSecurityManager() != null) {
+				// 设置所有方法可访问
 				AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
 					ReflectionUtils.makeAccessible(factoryMethod);
 					return null;
@@ -148,9 +150,11 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 				ReflectionUtils.makeAccessible(factoryMethod);
 			}
 
+			// 获取 method 对象
 			Method priorInvokedFactoryMethod = currentlyInvokedFactoryMethod.get();
 			try {
 				currentlyInvokedFactoryMethod.set(factoryMethod);
+				// 创建实例
 				Object result = factoryMethod.invoke(factoryBean, args);
 				if (result == null) {
 					result = new NullBean();
