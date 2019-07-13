@@ -207,21 +207,21 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
-		// 从 map 缓存中获取对象
+		// 从 map 缓存中获取对（一级缓存）
 		Object singletonObject = this.singletonObjects.get(beanName);
 		// 缓存中不存在且正在创建当前 bean
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			synchronized (this.singletonObjects) {
-				// 从 earlySingletonObjects 中获取单例对象
+				// 从 earlySingletonObjects 中获取单例对象（二级缓存）
 				singletonObject = this.earlySingletonObjects.get(beanName);
 				// earlySingletonObjects 中没有，且允许提前创建
 				if (singletonObject == null && allowEarlyReference) {
 					// 获取单例缓存工厂
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 					if (singletonFactory != null) {
-						// 从工厂中获取 bean
+						// 从工厂中获取 bean（三级缓存）
 						singletonObject = singletonFactory.getObject();
-						// 添加 bean 到 earlySingletonObjects 中
+						// 添加 bean 到 earlySingletonObjects 中（加入到二级缓存中，并删除三级缓存）
 						this.earlySingletonObjects.put(beanName, singletonObject);
 						// 从 singletonFactories 中移除对应的 ObjectFactory，因为已经加入到了 earlySingletonObjects 缓存
 						this.singletonFactories.remove(beanName);
