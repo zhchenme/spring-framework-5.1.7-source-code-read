@@ -72,21 +72,21 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/** Cache of singleton objects: bean name to bean instance. */
 	/**
-	 * 单例对象缓存
+	 * 单例对象缓存，用于存放完全初始化好的 bean 一级缓存
 	 */
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
 
 	/** Cache of singleton factories: bean name to ObjectFactory. */
 	/**
-	 * 单例工厂缓存
+	 * 单例工厂缓存 三级缓存
 	 */
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
 	/** Cache of early singleton objects: bean name to bean instance. */
 	/**
-	 * 早期单例实例缓存
+	 * 早期单例实例缓存 二级缓存
 	 *
-	 * 它与 {@link #singletonFactories} 区别在于 earlySingletonObjects 中存放的 bean 不一定是完整
+	 * 它与 {@link #singletonFactories} 区别在于 earlySingletonObjects 中存放的 bean 不一定是完整（属性尚未填充）
 	 *
 	 * 从 {@link #getSingleton(String)} 方法中，我们可以了解，bean 在创建过程中就已经加入到 earlySingletonObjects 中了。
 	 * 所以当在 bean 的创建过程中，就可以通过 getBean() 方法获取
@@ -169,6 +169,9 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * if necessary.
 	 * <p>To be called for eager registration of singletons, e.g. to be able to
 	 * resolve circular references.
+	 *
+	 * @see AbstractAutowireCapableBeanFactory#doCreateBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])
+	 *
 	 * @param beanName the name of the bean
 	 * @param singletonFactory the factory for the singleton object
 	 */
@@ -201,6 +204,22 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * 第三步，若为空且允许提前创建，则从 singletonFactories 中获取相应的 ObjectFactory 对象。若不为空，则调用其 ObjectFactory#getObject(String name) 方法，
 	 * 创建 Bean 对象，然后将其加入到 earlySingletonObjects ，然后从 singletonFactories 删除。
 	 *
+	 *
+	 *
+	 *
+	 *
+	 * @see #addSingleton(java.lang.String, java.lang.Object)
+	 * @see #addSingletonFactory(java.lang.String, org.springframework.beans.factory.ObjectFactory)
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 * @param beanName the name of the bean to look for                             beanName
 	 * @param allowEarlyReference whether early references should be created or not 是否早期应该创建引用
 	 * @return the registered singleton object, or {@code null} if none found
@@ -212,14 +231,14 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		// 缓存中不存在且正在创建当前 bean
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			synchronized (this.singletonObjects) {
-				// 从 earlySingletonObjects 中获取单例对象（二级缓存）
+				// 从 earlySingletonObjects 中获取单例对象（二级缓存），提前曝光 bean
 				singletonObject = this.earlySingletonObjects.get(beanName);
 				// earlySingletonObjects 中没有，且允许提前创建
 				if (singletonObject == null && allowEarlyReference) {
 					// 获取单例缓存工厂
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 					if (singletonFactory != null) {
-						// 从工厂中获取 bean（三级缓存）
+						// 从工厂中获取 bean（三级缓存），提前曝光 bean
 						singletonObject = singletonFactory.getObject();
 						// 添加 bean 到 earlySingletonObjects 中（加入到二级缓存中，并删除三级缓存）
 						this.earlySingletonObjects.put(beanName, singletonObject);
