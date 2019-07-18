@@ -521,7 +521,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
-			// 创建 bean
+			// TODO 19-07-18 创建 bean
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
 				logger.trace("Finished creating instance of bean '" + beanName + "'");
@@ -603,6 +603,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						"' to allow for resolving potential circular references");
 			}
 			// 将 bean 放入三级缓存 singletonFactories 中
+			// TODO 19-07-18 可以解决循环依赖的情况
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
 
@@ -610,6 +611,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		Object exposedObject = bean;
 		try {
 			//  对 bean 进行填充，将各个属性值注入，可能存在依赖于其他 bean 的属性
+			// TODO 19-07-18 与上面循环依赖对应
 			populateBean(beanName, mbd, instanceWrapper);
 			// 初始化
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
@@ -624,10 +626,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
+		// TODO 19-07-18 如果提前暴露 bean，循环依赖处理，这个处理的 bean 本身，而不是依赖的 bean
 		if (earlySingletonExposure) {
+			// 从缓存中获取提前暴露的 bean
 			Object earlySingletonReference = getSingleton(beanName, false);
 			if (earlySingletonReference != null) {
 				if (exposedObject == bean) {
+					// 这个 bean 可能不是完整的 bean 啊？？？
 					exposedObject = earlySingletonReference;
 				}
 				else if (!this.allowRawInjectionDespiteWrapping && hasDependentBean(beanName)) {
@@ -1796,6 +1801,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected Object initializeBean(final String beanName, final Object bean, @Nullable RootBeanDefinition mbd) {
 		if (System.getSecurityManager() != null) {
 			AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+				// 激活 Aware 方法，对特殊的 bean 处理：Aware、BeanClassLoaderAware、BeanFactoryAware
 				invokeAwareMethods(beanName, bean);
 				return null;
 			}, getAccessControlContext());
@@ -1806,10 +1812,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		Object wrappedBean = bean;
 		if (mbd == null || !mbd.isSynthetic()) {
+			// 前置处理，用户可以实现 BeanPostProcessor 进行自定义业务处理
 			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
 		}
 
 		try {
+			// 如果用户实现了 InitializingBean 接口或者自定义了 init 方法，进行处理
 			invokeInitMethods(beanName, wrappedBean, mbd);
 		}
 		catch (Throwable ex) {
@@ -1818,12 +1826,19 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					beanName, "Invocation of init method failed", ex);
 		}
 		if (mbd == null || !mbd.isSynthetic()) {
+			// 后置处理
 			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
 		}
 
 		return wrappedBean;
 	}
 
+	/**
+	 * 对 Aware 类型进行区分并进行对应的设置
+	 *
+	 * @param beanName
+	 * @param bean
+	 */
 	private void invokeAwareMethods(final String beanName, final Object bean) {
 		if (bean instanceof Aware) {
 			if (bean instanceof BeanNameAware) {

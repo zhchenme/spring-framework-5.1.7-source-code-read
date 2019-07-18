@@ -235,6 +235,19 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 *
+	 * 该方法大致的处理流程：
+	 * 		1.转换 beanName
+	 * 		2.从缓存中获取单例 bean（涉及到三个缓存，也用于解决单例对象循环依赖的情况），然后该 bean 是否存在判断分别走不同的分支
+	 *		3.以下考虑单例 bean 不存在，判断循环依赖，如果存在，直接扔出异常
+	 *		4.如果 parentBeanFactory 存在，尝试从 parentBeanFactory 获取 bean 对象，因为 !containsBeanDefinition(beanName) 就意味着定义的 xml 文件中没有 beanName 相应的配置，这个时候就只能从 parentBeanFactory 中获取
+	 *		5.尝试获取 RootBeanDefinition，可能会合并父类的相关属性
+	 *		6.依赖检查（先初始化依赖的 bean 再创建自身 bean）
+	 *		7.根据 bean 的作用域不通创建对应的 bean
+	 *		8.类型转换
+	 *
+	 *
+	 *
 	 * Spring 循环依赖的场景有两种
 	 * 		1.构造器的循环依赖
 	 * 		2.field 属性的循环依赖
@@ -393,6 +406,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				if (mbd.isSingleton()) {
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
+							// TODO 19-07-18 如果 创建 bean（循环依赖）
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {
