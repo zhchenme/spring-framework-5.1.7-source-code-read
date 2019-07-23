@@ -28,6 +28,8 @@ package org.springframework.beans.factory;
  * Refer to {@link org.springframework.context.support.ApplicationContextAwareProcessor}
  * for an example of processing specific {@code *Aware} interface callbacks.
  *
+ * 实现了该接口的 bean，有被 Spring 容器通知的能力，即回调
+ *
  * @author Chris Beams
  * @author Juergen Hoeller
  * @since 3.1

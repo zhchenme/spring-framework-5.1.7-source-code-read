@@ -33,6 +33,11 @@ import org.springframework.lang.Nullable;
  * while post-processors that wrap beans with proxies will normally
  * implement {@link #postProcessAfterInitialization}.
  *
+ * 一般普通的 BeanFactory 是不支持自动注册 BeanPostProcessor，需要我们手动调用 #addBeanPostProcessor(BeanPostProcessor beanPostProcessor) 方法进行注册
+ * 注册后的 BeanPostProcessor 适用于所有该 BeanFactory 创建的 bean
+ *
+ * 但是 ApplicationContext 可以在其 bean 定义中自动检测所有的 BeanPostProcessor 并自动完成注册，同时将他们应用到随后创建的任何 Bean 中
+ *
  * @author Juergen Hoeller
  * @since 10.10.2003
  * @see InstantiationAwareBeanPostProcessor

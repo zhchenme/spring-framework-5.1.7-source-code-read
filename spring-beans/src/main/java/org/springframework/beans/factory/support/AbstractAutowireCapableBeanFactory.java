@@ -415,6 +415,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			throws BeansException {
 
 		Object result = existingBean;
+		// 遍历所有的 BeanPostProcessor
 		for (BeanPostProcessor processor : getBeanPostProcessors()) {
 			Object current = processor.postProcessBeforeInitialization(result, beanName);
 			if (current == null) {
@@ -544,6 +545,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * at this point, e.g. checking {@code postProcessBeforeInstantiation} callbacks.
 	 * <p>Differentiates between default bean instantiation, use of a
 	 * factory method, and autowiring a constructor.
+	 *
+	 * 1.实例化 bean 对象（createBeanInstance）
+	 * 2.注入属性（populateBean），在注入属性之前会将初始化的对象加入到缓存中
+	 * 		@see DefaultSingletonBeanRegistry#addSingletonFactory(java.lang.String, org.springframework.beans.factory.ObjectFactory)
+	 * 3.初始化 bean 对象（initializeBean）
+	 *
 	 * @param beanName the name of the bean
 	 * @param mbd the merged bean definition for the bean
 	 * @param args explicit arguments to use for constructor or factory method invocation
@@ -1790,6 +1797,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param bean the new bean instance we may need to initialize
 	 * @param mbd the bean definition that the bean was created with
 	 * (can also be {@code null}, if given an existing bean instance)
+	 *
+	 * 1.激活 Aware 方法
+	 * 2.处理后置处理器
+	 * 3.处理自定义的 init 方法
+	 *
+	 *
 	 * @return the initialized bean instance (potentially wrapped)
 	 * @see BeanNameAware
 	 * @see BeanClassLoaderAware
