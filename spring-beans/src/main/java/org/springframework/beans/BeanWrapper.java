@@ -36,6 +36,10 @@ import java.beans.PropertyDescriptor;
  * is "false", to avoid side effects caused by getter method invocations.
  * Turn this to "true" to expose present property values to custom editors.
  *
+ *
+ * BeanWrapper 是 BeanDefinition 到 bean 的一个中间介质
+ *
+ *
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @since 13 April 2001

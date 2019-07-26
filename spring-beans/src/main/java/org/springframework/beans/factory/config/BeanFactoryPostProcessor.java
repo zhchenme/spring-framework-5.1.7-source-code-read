@@ -50,6 +50,13 @@ public interface BeanFactoryPostProcessor {
 	 * initialization. All bean definitions will have been loaded, but no beans
 	 * will have been instantiated yet. This allows for overriding or adding
 	 * properties even to eager-initializing beans.
+	 *
+	 * 工作于 BeanDefinition 加载完成之后，Bean 实例化之前，其主要作用是对加载 BeanDefinition 进行修改
+	 *
+	 * 我们始终需要注意的是 BeanFactoryPostProcessor 是与 BeanDefinition 打交道的，如果想要与 Bean 打交道，请使用 BeanPostProcessor
+	 *
+	 * 与 BeanPostProcessor 一样，BeanFactoryPostProcessor 同样支持排序，可以实现 Ordered 接口
+	 *
 	 * @param beanFactory the bean factory used by the application context
 	 * @throws org.springframework.beans.BeansException in case of errors
 	 */
