@@ -44,6 +44,12 @@ import org.springframework.lang.Nullable;
  * its own child context that is independent of that of any other servlet.
  * </ul>
  *
+ *
+ * 1.继承 MessageSource，提供国际化的标准访问策略
+ * 2.继承 ApplicationEventPublisher ，提供强大的事件机制
+ * 3.扩展 ResourceLoader，可以用来加载多个 Resource，可以灵活访问不同的资源
+ * 4.对 Web 应用的支持
+ *
  * <p>In addition to standard {@link org.springframework.beans.factory.BeanFactory}
  * lifecycle capabilities, ApplicationContext implementations detect and invoke
  * {@link ApplicationContextAware} beans as well as {@link ResourceLoaderAware},
