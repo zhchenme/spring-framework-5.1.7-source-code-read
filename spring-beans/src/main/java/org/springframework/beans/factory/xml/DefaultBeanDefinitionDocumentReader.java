@@ -119,6 +119,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 *
 	 * TODO important method
 	 *
+	 * TODO  2019-08-02 注册所有的 beanDefinition
+	 *
 	 * 注册 document 中的每个 bean
 	 */
 	@SuppressWarnings("deprecation")  // for Environment.acceptsProfiles(String...)

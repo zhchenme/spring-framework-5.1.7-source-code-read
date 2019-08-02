@@ -92,6 +92,9 @@ public abstract class AbstractRefreshableConfigApplicationContext extends Abstra
 	 * patterns, which will get resolved via a ResourcePatternResolver.
 	 * <p>The default implementation returns {@code null}. Subclasses can override
 	 * this to provide a set of resource locations to load bean definitions from.
+	 *
+	 * 获取配置文件数组，如果没有指定，则获取默认配置
+	 *
 	 * @return an array of resource locations, or {@code null} if none
 	 * @see #getResources
 	 * @see #getResourcePatternResolver

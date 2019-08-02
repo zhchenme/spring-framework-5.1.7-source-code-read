@@ -215,6 +215,11 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	}
 
 
+	/**
+	 * 通过构造函数对资源进行初始化
+	 *
+	 * @return
+	 */
 	@Override
 	@Nullable
 	protected Resource[] getConfigResources() {
