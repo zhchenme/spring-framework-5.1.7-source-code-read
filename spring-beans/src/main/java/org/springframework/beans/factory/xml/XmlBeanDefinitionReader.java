@@ -421,6 +421,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 		try {
 			// 获取 XML document 实例
+			// 2019-08-05 TODO
 			Document doc = doLoadDocument(inputSource, resource);
 			System.out.println(doc.getDoctype());
 			// 调用 registerBeanDefinitions 方法注册 BeanDefinitions

@@ -162,6 +162,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	/** Unique id for this context, if any. */
+	// 当前 context 对象
 	private String id = ObjectUtils.identityToString(this);
 
 	/** Display name. */
@@ -519,6 +520,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			// Tell the subclass to refresh the internal bean factory.
 			// 让子类刷新并创建 BeanFactory
+			// TODO
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.

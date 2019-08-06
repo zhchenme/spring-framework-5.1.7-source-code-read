@@ -115,6 +115,7 @@ public class XmlWebApplicationContextTests extends AbstractApplicationContextTes
 	@Test
 	@SuppressWarnings("resource")
 	public void withoutMessageSource() throws Exception {
+		// TODO debug
 		MockServletContext sc = new MockServletContext("");
 		XmlWebApplicationContext wac = new XmlWebApplicationContext();
 		wac.setParent(root);
