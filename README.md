@@ -51,3 +51,10 @@
 bean 的生命周期图解([图源](http://www.tianxiaobo.com/2018/01/19/Spring-bean%E7%9A%84%E7%94%9F%E5%91%BD%E6%B5%81%E7%A8%8B/))：
 
 ![](https://blog-pictures.oss-cn-shanghai.aliyuncs.com/bean%e5%ae%9e%e4%be%8b%e5%8c%96%e8%bf%87%e7%a8%8b.png)
+
+
+
+### IoC 流程
+
+入口：`org.springframework.context.support.AbstractApplicationContext.refresh`
+test：`org.springframework.web.context.XmlWebApplicationContextTests.withoutMessageSource`
