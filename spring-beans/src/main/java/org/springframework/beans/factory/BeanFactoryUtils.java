@@ -84,7 +84,7 @@ public abstract class BeanFactoryUtils {
 		if (!name.startsWith(BeanFactory.FACTORY_BEAN_PREFIX)) {
 			return name;
 		}
-		// 如果以 '&' 开头，进行截取
+		// 如果以 '&' 开头，进行截取，比如 '&&&&aaa' 返回 `aaa`
 		return transformedBeanNameCache.computeIfAbsent(name, beanName -> {
 			do {
 				beanName = beanName.substring(BeanFactory.FACTORY_BEAN_PREFIX.length());

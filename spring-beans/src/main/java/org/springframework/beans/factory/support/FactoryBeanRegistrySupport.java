@@ -90,7 +90,9 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	/**
 	 * Obtain an object to expose from the given FactoryBean.
 	 *
-	 * 从 BeanFactory 中获取 bean
+	 * 从 FactoryBean 中获取 bean
+	 * FactoryBean 有两种类型，单例与原型，如果是单例则放到缓存中，供后续调用，非单例则不缓存，每次调用重新生成
+	 *
 	 *
 	 * @param factory the FactoryBean instance
 	 * @param beanName the name of the bean
@@ -108,7 +110,6 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 				Object object = this.factoryBeanObjectCache.get(beanName);
 				if (object == null) {
 					// 缓存中为空，则从 FactoryBean 中获取
-					// TODO
 					object = doGetObjectFromFactoryBean(factory, beanName);
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
@@ -128,7 +129,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 							// 他们记录着 Bean 的加载状态，是检测当前 Bean 是否处于创建中的关键之处，对解决 Bean 循环依赖起着关键作用。
 							beforeSingletonCreation(beanName);
 							try {
-								// 对从 FactoryBean 获取的对象进行后处理
+								// 对从 FactoryBean 获取的对象进行后处理，默认直接返回对象，可自定义实现类
 								// 生成的对象将暴露给 bean 引用
 								object = postProcessObjectFromFactoryBean(object, beanName);
 							}
@@ -150,8 +151,9 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 				return object;
 			}
 		}
+		// 非单例模式
 		else {
-			// 从 FactoryBean 中获取对象
+			// 跳过缓存，直接从从 FactoryBean 中获取对象
 			Object object = doGetObjectFromFactoryBean(factory, beanName);
 			// 判断是否需要后续处理
 			if (shouldPostProcess) {
@@ -171,7 +173,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	/**
 	 * Obtain an object to expose from the given FactoryBean.
 	 *
-	 * TODO
+	 * 从 FactoryBean 中获取实例
 	 *
 	 * @param factory the FactoryBean instance
 	 * @param beanName the name of the bean

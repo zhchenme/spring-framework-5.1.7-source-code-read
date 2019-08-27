@@ -214,7 +214,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 *
 	 *
 	 *
-	 *
+	 * allowEarlyReference 表示是否允许其他 bean 引用正在创建中的 bean，用于处理循环引用的问题
 	 *
 	 *
 	 *
