@@ -266,6 +266,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		synchronized (this.singletonObjects) {
 			// 检查缓存 map
 			Object singletonObject = this.singletonObjects.get(beanName);
+			// 如果缓存中存在则直接返回，不需要从头开始创建
 			if (singletonObject == null) {
 				if (this.singletonsCurrentlyInDestruction) {
 					throw new BeanCreationNotAllowedException(beanName,
@@ -275,7 +276,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
-				// 加载前的处理，
+				// 加载前的处理，将 beanName 缓存到 singletonsCurrentlyInCreation 集合中，表明对应的 bean 正在被创建
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
@@ -283,7 +284,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
-					// 初始化 bean
+					// 初始化 bean，对应 AbstractBeanFactory getSingleton 中 createBean 方法
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
@@ -307,11 +308,14 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
-					// 后置处理，前置处理加入到正在创建的 bean 的 map 中，后置处理从中删除
+					// 后置处理，前置处理加入到正在创建的 bean 的 map 中，后置处理从中删除，表明已经创建完成
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
-					// 加入到缓存中，并移除对应的工厂
+					/**
+					 *  将 <beanName, singletonObject> 键值对添加到 singletonObjects 集合中，
+					 *  并从其他集合（比如 earlySingletonObjects）中移除 singletonObject 记录
+					 */
 					addSingleton(beanName, singletonObject);
 				}
 			}

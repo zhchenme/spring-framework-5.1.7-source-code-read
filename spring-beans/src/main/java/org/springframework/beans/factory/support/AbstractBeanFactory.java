@@ -1503,6 +1503,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws CannotLoadBeanClassException {
 
 		try {
+			// 判断 beanDefinition 中是否包含 class 属性
 			if (mbd.hasBeanClass()) {
 				return mbd.getBeanClass();
 			}
