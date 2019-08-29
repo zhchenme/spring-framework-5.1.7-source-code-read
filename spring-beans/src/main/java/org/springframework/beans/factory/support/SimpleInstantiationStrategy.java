@@ -76,8 +76,10 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 									(PrivilegedExceptionAction<Constructor<?>>) clazz::getDeclaredConstructor);
 						}
 						else {
+							// 获取默认的构造函数
 							constructorToUse = clazz.getDeclaredConstructor();
 						}
+						// 设置 resolvedConstructorOrFactoryMethod
 						bd.resolvedConstructorOrFactoryMethod = constructorToUse;
 					}
 					catch (Throwable ex) {
@@ -108,6 +110,7 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 	public Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner,
 			final Constructor<?> ctor, Object... args) {
 
+		// 如果不包含 lookup-method 和 replace-method，通过反射创建实例
 		if (!bd.hasMethodOverrides()) {
 			if (System.getSecurityManager() != null) {
 				// use own privileged to change accessibility (when security is on)
@@ -119,6 +122,7 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 			return BeanUtils.instantiateClass(ctor, args);
 		}
 		else {
+			// 包含 lookup-method 和 replace-method，则通过 CGLIB 增强 bean 实例
 			return instantiateWithMethodInjection(bd, beanName, owner, ctor, args);
 		}
 	}
