@@ -301,7 +301,7 @@ AliasRegistry
 
 上面这个方法主要用于处理别名，别名都被放在一个 map（K:alias V:beanName）中，因为别名没有限制(别名 A 指向别名 B，别名 B 指向名称为 C 的 bean，则返回 C)，因此要通过循环的方式找到最终的别名，并返回对应的 beanName。
 
-**2.3 获取单例 bean**
+**2.3 从缓存获取单例 bean**
 
 单例 bean 最大的特点就是一单创建就会存储在缓存中，以后再获取单例 bean 时都会先检查一下缓存。
 
@@ -356,13 +356,309 @@ DefaultSingletonBeanRegistry
 - `earlySingletonObjects`：用于存放还在初始化中的 bean，用于解决循环依赖
 - `singletonFactories`：用于存放 bean 工厂。bean 工厂所产生的 bean 是还未完成初始化的 bean，bean 工厂所生成的对象最终会被缓存到 `earlySingletonObjects` 中
 
+**2.4 从 FactoryBean 中获取 bean**
 
+`FactoryBean` 与 `BeanFactory` 经常会被拿出来作比较，简单来说 `FactoryBean` 是一种用于生产 bean 接口，用户可以通过实现它来生成 bean，而 `BeanFactory` 是用来生产 bean 的工厂，IoC 容器中大多数 bean（`FactoryBean 除外`）都是 `BeanFactory` 生成的。
 
+关于 `FactoryBean` 的使用可以参考 [容器源码分析系列文章导读](http://www.tianxiaobo.com/2018/05/30/Spring-IOC-%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E7%B3%BB%E5%88%97%E6%96%87%E7%AB%A0%E5%AF%BC%E8%AF%BB/) 中的例子，下面我们来看代码：
+
+```java
+AbstractBeanFactory
+
+	protected Object getObjectForBeanInstance(
+			Object beanInstance, String name, String beanName, @Nullable RootBeanDefinition mbd) {
+
+		// 如果 name 与工厂相关以 '&' 开头，表示获取 FactoryBean 本身，而不是对应的 bean 实例
+		if (BeanFactoryUtils.isFactoryDereference(name)) {
+			// 如果是 NullBean 直接返回
+			if (beanInstance instanceof NullBean) {
+				return beanInstance;
+			}
+			// 如果不是 FactoryBean 类型直接抛出异常
+			if (!(beanInstance instanceof FactoryBean)) {
+				throw new BeanIsNotAFactoryException(transformedBeanName(name), beanInstance.getClass());
+			}
+		}
+
+		/**
+		 * !(beanInstance instanceof FactoryBean) 为 true 时表示这是一个普通的 bean（非 FactoryBean 类型），直接返回
+		 * BeanFactoryUtils.isFactoryDereference(name) 为 true 时表示要获取的 FactoryBean 本身，也直接返回
+		 * BeanFactoryUtils.isFactoryDereference(name) 方法判断 name 是否以 `&` 开头，是则返回 true
+		 */
+		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
+			return beanInstance;
+		}
+
+		// 代码如果走到这里，则表明 beanInstance 一定是 FactoryBean 类型的
+		Object object = null;
+		/**
+		 * 如果 beanDefinition 为 null，则从 factoryBeanObjectCache 缓存中获取 bean
+		 * FactoryBean 生成的单例 bean 会被缓存在 factoryBeanObjectCache 集合中，不用每次都创建
+ 		 */
+		if (mbd == null) {
+			object = getCachedObjectForFactoryBean(beanName);
+		}
+		// 使用 FactoryBean 获得 Bean 对象
+		if (object == null) {
+			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
+			// 如果 mbd 为空，判断当前 FactroyBean 的 beanName 是否已经注册到 beanDefinitionMap 中
+			if (mbd == null && containsBeanDefinition(beanName)) {
+				// 合并 BeanDefinition
+				mbd = getMergedLocalBeanDefinition(beanName);
+			}
+			// 检测是用户定义的还是程序本身定义的
+			boolean synthetic = (mbd != null && mbd.isSynthetic());
+			// 获取 FactoryBean 对象
+			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
+		}
+		return object;
+	}
+```
+
+`getObjectForBeanInstance` 方法中，首先会判断 `beanInstance` 的类型，如果要获取的是 `FactoryBean` 本身或者普通的 bean，则直接返回，如果是要获取 `FactoryBean` 中对应的实例则调用 `getObjectFromFactoryBean` 方法获取。
+
+```java
+FactoryBeanRegistrySupport
+
+	protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanName, boolean shouldPostProcess) {
+		/**
+		 * FactryBean 默认为单例模式，对于单例 bean 在创建后会放到缓存中
+		 * 原型模式并没有缓存，每次都会重新创建对象
+		 */
+		if (factory.isSingleton() && containsSingleton(beanName)) {
+			synchronized (getSingletonMutex()) {
+				// 从 factoryBeanObjectCache 缓存中获取指定的 Bean
+				Object object = this.factoryBeanObjectCache.get(beanName);
+				if (object == null) {
+					// 缓存中为空，则从 FactoryBean 中获取
+					object = doGetObjectFromFactoryBean(factory, beanName);
+					Object alreadyThere = this.factoryBeanObjectCache.get(beanName);
+					if (alreadyThere != null) {
+						object = alreadyThere;
+					}
+					else {
+						if (shouldPostProcess) {
+							// 当前 bean 正在创建
+							if (isSingletonCurrentlyInCreation(beanName)) {
+								// 暂时返回非后处理对象，而不是存储它
+								return object;
+							}
+							// 前置处理与后置处理至关重要，把 bean 加入到正在创建的集合中
+							// 他们记录着 Bean 的加载状态，是检测当前 Bean 是否处于创建中的关键之处，对解决 Bean 循环依赖起着关键作用
+							beforeSingletonCreation(beanName);
+							try {
+								// 对从 FactoryBean 获取的对象进行后处理，默认直接返回对象，可自定义实现类
+								// 生成的对象将暴露给 bean 引用
+								object = postProcessObjectFromFactoryBean(object, beanName);
+							}
+							catch (Throwable ex) {
+								throw new BeanCreationException(beanName,
+										"Post-processing of FactoryBean's singleton object failed", ex);
+							}
+							finally {
+								// 后置处理， 把 bean 从正在创建的集合中移除
+								afterSingletonCreation(beanName);
+							}
+						}
+						// 添加到 factoryBeanObjectCache 中，进行缓存
+						if (containsSingleton(beanName)) {
+							this.factoryBeanObjectCache.put(beanName, object);
+						}
+					}
+				}
+				return object;
+			}
+		}
+		// 非单例模式
+		else {
+			// 跳过缓存，直接从从 FactoryBean 中获取对象
+			Object object = doGetObjectFromFactoryBean(factory, beanName);
+			// 判断是否需要后续处理
+			if (shouldPostProcess) {
+				try {
+					// 对从 FactoryBean 获取的对象进行后置处理
+					object = postProcessObjectFromFactoryBean(object, beanName);
+				}
+				catch (Throwable ex) {
+					throw new BeanCreationException(beanName, "Post-processing of FactoryBean's object failed", ex);
+				}
+			}
+			return object;
+		}
+	}
+```
+
+`FactoryBean` 有单例与原型两种模式，默认为单例模式，如果为单例模式，则先尝试从缓存中获取，如果缓存中为空则调用 `doGetObjectFromFactoryBean` 方法创建，创建成功后需要添加到缓存中去，避免下次获取时重新创建。如果为非单例模式则直接调用 `doGetObjectFromFactoryBean` 方法，生成的对象并不会缓存，当然在这个过程中还涉及到后置处理器相关的内容，这里就不展开了。
+
+`doGetObjectFromFactoryBean` 方法实现如下：
+
+```java
+FactoryBeanRegistrySupport
+
+	private Object doGetObjectFromFactoryBean(final FactoryBean<?> factory, final String beanName)
+			throws BeanCreationException {
+
+		Object object;
+		try {
+			// 有系统安全权限，直接使用特权获取 bean
+			if (System.getSecurityManager() != null) {
+				AccessControlContext acc = getAccessControlContext();
+				try {
+					object = AccessController.doPrivileged((PrivilegedExceptionAction<Object>) factory::getObject, acc);
+				}
+				catch (PrivilegedActionException pae) {
+					throw pae.getException();
+				}
+			}
+			// 不需要权限验证，直接从 FactoryBean 中获取 bean
+			else {
+				object = factory.getObject();
+			}
+		}
+		catch (FactoryBeanNotInitializedException ex) {
+			throw new BeanCurrentlyInCreationException(beanName, ex.toString());
+		}
+		catch (Throwable ex) {
+			throw new BeanCreationException(beanName, "FactoryBean threw exception on object creation", ex);
+		}
+		
+		if (object == null) {
+			if (isSingletonCurrentlyInCreation(beanName)) {
+				throw new BeanCurrentlyInCreationException(
+						beanName, "FactoryBean which is currently in creation returned null from getObject");
+			}
+			object = new NullBean();
+		}
+		return object;
+	}
+```
+
+上面的方法中我们只需要关注 `factory.getObject()` 即可，比较简单。
+
+整个流程较长，下面我们来总结一下：
+
+ 1. 判断 bean 的类型，如果是 `FactoryBean` 本身或普通的 bean，则直接返回，如果不是上面两种情况都不满足，则说明一定是 `FactoryBean` 类型的实例
+ 2. 判断缓存中是否有该实例，有则直接返回
+ 3. 如果缓存中没有，则判断是否有父 `BeanDefinition`，如果有，则与子 `BeanDefinition` 进行合并
+ 4. 判断 `FactoryBean` 是否为单例模式，如果是单例模式从 `factoryBeanObjectCache `缓存中获取 bean，缓存为空直接从 `FactoryBean` 中获取，中间有后置处理，获取后放入到缓存
+ 5. 原型模式也是直接从 `FactoryBean` 中直接获取，不会放入到缓存
+
+**2.5 合并 BeanDefinition**
+
+Spring 支持配置继承，在标签中可以使用parent属性配置父类 bean。这样子类 bean 可以继承父类 bean 的配置信息，同时也可覆盖父类中的配置。比如下面的配置（这段完全拷贝[田小波](http://www.tianxiaobo.com/2018/06/01/Spring-IOC-%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E8%8E%B7%E5%8F%96%E5%8D%95%E4%BE%8B-bean/#24-%E5%90%88%E5%B9%B6%E7%88%B6-beandefinition-%E4%B8%8E%E5%AD%90-beandefinition)的案例分析）：
+
+```java
+	<bean id="hello" class="xyz.coolblog.innerbean.Hello">
+	    <property name="content" value="hello"/>
+	</bean>
+
+	<bean id="hello-child" parent="hello">
+	    <property name="content" value="I`m hello-child"/>
+	</bean>
+```
+
+如上所示，hello-child 配置继承自 hello。hello-child 未配置 class 属性，这里我们让它继承父配置中的 class 属性，通过指定父 bean，子 bean 也可以实例化成功。看完了例子下面我们来看代码：
+
+```java
+AbstractBeanFactory
+
+	protected RootBeanDefinition getMergedLocalBeanDefinition(String beanName) throws BeansException {
+		// 如果 beanDefinition 已经合并了，获取后直接返回
+		RootBeanDefinition mbd = this.mergedBeanDefinitions.get(beanName);
+		if (mbd != null) {
+			return mbd;
+		}
+		// beanName 与 beanDefinition 合并
+		return getMergedBeanDefinition(beanName, getBeanDefinition(beanName));
+	}
+```
+
+合并前会先检查之前 `BeanDefinition` 是否合并过，如果合并过则直接返回合并后的 `BeanDefinition`。
+
+```java
+AbstractBeanFactory
+
+	protected RootBeanDefinition getMergedBeanDefinition(
+			String beanName, BeanDefinition bd, @Nullable BeanDefinition containingBd)
+			throws BeanDefinitionStoreException {
+
+		synchronized (this.mergedBeanDefinitions) {
+			RootBeanDefinition mbd = null;
+
+			// 这里 containingBd 为 null，个人感觉是为了适配其他的调用
+			if (containingBd == null) {
+				mbd = this.mergedBeanDefinitions.get(beanName);
+			}
+
+			if (mbd == null) {
+				// 如果没有父配置，则拷贝 RootBeanDefinition 或将 BeanDefinition 升级为 RootBeanDefinition
+				if (bd.getParentName() == null) {
+					if (bd instanceof RootBeanDefinition) {
+						mbd = ((RootBeanDefinition) bd).cloneBeanDefinition();
+					}
+					else {
+						mbd = new RootBeanDefinition(bd);
+					}
+				}
+				// 有父配置
+				else {
+					// 将子 BeanDefinition 的数据与父 BeanDefinition 进行合并
+					BeanDefinition pbd;
+					try {
+						// 获取父的 beanName，这里会进行转化，上面我们已经分析过了
+						String parentBeanName = transformedBeanName(bd.getParentName());
+						// 判断父 beanName 与子 beanName 是否相同
+						if (!beanName.equals(parentBeanName)) {
+							// 父 beanDefinition 可能也有 parent，如果有需要继续合并父 beanDefinition与爷爷 beanDefinition
+							pbd = getMergedBeanDefinition(parentBeanName);
+						}
+						else {
+							// 名字相同特殊处理，并合并父 beanDefinition 与爷爷 beanDefinition
+							BeanFactory parent = getParentBeanFactory();
+							if (parent instanceof ConfigurableBeanFactory) {
+								pbd = ((ConfigurableBeanFactory) parent).getMergedBeanDefinition(parentBeanName);
+							}
+							else {
+								throw new NoSuchBeanDefinitionException(parentBeanName,
+										"Parent name '" + parentBeanName + "' is equal to bean name '" + beanName +
+										"': cannot be resolved without an AbstractBeanFactory parent");
+							}
+						}
+					}
+					catch (NoSuchBeanDefinitionException ex) {
+						throw new BeanDefinitionStoreException(bd.getResourceDescription(), beanName,
+								"Could not resolve parent bean definition '" + bd.getParentName() + "'", ex);
+					}
+					// 将父 beanDefinition 深拷贝到 RootBeanDefinition
+					mbd = new RootBeanDefinition(pbd);
+					// 子 beanDefinition 覆盖父 beanDefinition 属性
+					mbd.overrideFrom(bd);
+				}
+
+				// 如果没有指定，默认设置为单例模式
+				if (!StringUtils.hasLength(mbd.getScope())) {
+					mbd.setScope(RootBeanDefinition.SCOPE_SINGLETON);
+				}
+
+				if (containingBd != null && !containingBd.isSingleton() && mbd.isSingleton()) {
+					mbd.setScope(containingBd.getScope());
+				}
+
+				if (containingBd == null && isCacheBeanMetadata()) {
+					// 将 beanName 与 RootBeanDefinition 进行关联，下次可直接获取
+					this.mergedBeanDefinitions.put(beanName, mbd);
+				}
+			}
+
+			return mbd;
+		}
+	}
+```
+
+`getMergedBeanDefinition` 相对来说比较简单，先检查是否有父 `BeanDefinition`，如果没有则升级为 `RootBeanDefinition`，如果有则父 `BeanDefinition` 也可能有父 `BeanDefinition`，有的话继续合并。接着将父 `BeanDefinition` 中的属性全部深拷贝到 `RootBeanDefinition` 中，然后子属性覆盖父属性，最后将 beanName 与 `RootBeanDefinition` 进行关联，下次可直接从缓存中获取。
 
 
 ### 参考
-
-
 
 [Spring IOC 容器源码分析 - 获取单例 bean](http://www.tianxiaobo.com/2018/06/01/Spring-IOC-%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E8%8E%B7%E5%8F%96%E5%8D%95%E4%BE%8B-bean/) by 田小波 <br>
 [死磕 Spring 系列](http://cmsblogs.com/?cat=206) by 小明哥 <br>

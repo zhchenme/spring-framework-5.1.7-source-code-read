@@ -1337,7 +1337,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		if (mbd != null) {
 			return mbd;
 		}
-		// beanName 与 beanDefinition 合并，beanName 以 `&` 开头
+		// beanName 与 beanDefinition 合并
 		return getMergedBeanDefinition(beanName, getBeanDefinition(beanName));
 	}
 
