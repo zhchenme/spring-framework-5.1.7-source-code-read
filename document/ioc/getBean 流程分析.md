@@ -14,7 +14,7 @@ Spring 的源码也看了有两个多月的时间了，大概的功能模块基�
 
 **2.1 getBean 方法预览**
 
-相信使用过 Spring 的开发者们一定写过这样的代码 `applicationContext.getBean(alias)`，
+相信使用过 Spring 的开发者们一定写过这样的代码 `applicationContext.getBean(alias)`，调用过程很简单，过程确是很复杂的，下满我们一起来看一下。
 
 ```java
 AbstractBeanFactory
@@ -657,6 +657,11 @@ AbstractBeanFactory
 
 `getMergedBeanDefinition` 相对来说比较简单，先检查是否有父 `BeanDefinition`，如果没有则升级为 `RootBeanDefinition`，如果有则父 `BeanDefinition` 也可能有父 `BeanDefinition`，有的话继续合并。接着将父 `BeanDefinition` 中的属性全部深拷贝到 `RootBeanDefinition` 中，然后子属性覆盖父属性，最后将 beanName 与 `RootBeanDefinition` 进行关联，下次可直接从缓存中获取。
 
+### 总结
+
+这里我们只讲了从缓存获取单例 bean 与获取 `FactoryBean` 的过程，当单例 bean 没有创建时则需要从头开始加载创建 bean，为了防止篇幅过长，单独放到下一篇文章里里面讲解。Spring 单例 bean 还涉及到另外一个问题：循环依赖，关于循环依赖，后面也会单独讲解。
+
+关于 Spring 总结性的文章，参考了网上的一些文章（见参考），感谢！
 
 ### 参考
 
