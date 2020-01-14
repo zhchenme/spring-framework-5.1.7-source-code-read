@@ -16,6 +16,7 @@
 
 package org.springframework.beans.factory.xml;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import jdk.nashorn.internal.parser.JSONParser;
@@ -65,9 +66,11 @@ public class XmlBeanDefinitionReaderTests {
 	}
 
 	@Test
-	public void withImport() {
+	public void withImport() throws IOException {
+		// TODO
 		SimpleBeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		Resource resource = new ClassPathResource("import.xml", getClass());
+		System.out.println("========" + resource.contentLength());
 		new XmlBeanDefinitionReader(registry).loadBeanDefinitions(resource);
 		testBeanDefinitions(registry);
 	}

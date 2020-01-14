@@ -117,9 +117,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * Register each bean definition within the given root {@code <beans/>} element.
 	 *
-	 * TODO important method
-	 *
-	 * TODO  2019-08-02 注册所有的 beanDefinition
+	 * TODO  2019-08-02 注册 beanDefinition
 	 *
 	 * 注册 document 中的每个 bean
 	 */
@@ -138,7 +136,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 
 		// 检查 <bean> 标签的命名空间是否为空，或者是 http://www.springframework.org/schema/beans
 		if (this.delegate.isDefaultNamespace(root)) {
-			// 获取 profile 的值
+			// 获取 profile 的值，beans 标签可以设置 profile 属性用于多环境配置管理
 			String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
 			if (StringUtils.hasText(profileSpec)) {
 				// 处理 profile 多个值
@@ -267,7 +265,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		// 绝对路径
 		if (absoluteLocation) {
 			try {
-				// 将资源加载到 actualResources 集合中
+				// 将资源加载到 actualResources 集合中，可以视为递归循环
 				int importCount = getReaderContext().getReader().loadBeanDefinitions(location, actualResources);
 				if (logger.isTraceEnabled()) {
 					logger.trace("Imported " + importCount + " bean definitions from URL location [" + location + "]");
@@ -329,6 +327,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 		if (valid) {
 			try {
+				// 根据 name 注册别名，通过 aliasMap 进行关联
 				getReaderContext().getRegistry().registerAlias(name, alias);
 			}
 			catch (Exception ex) {
@@ -343,7 +342,6 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Process the given bean element, parsing the bean definition
 	 * and registering it with the registry.
 	 *
-	 * TODO important method
 	 * 处理 bean 标签，
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {

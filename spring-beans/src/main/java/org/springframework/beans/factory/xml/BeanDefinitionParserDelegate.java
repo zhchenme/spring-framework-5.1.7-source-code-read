@@ -84,6 +84,9 @@ import org.springframework.util.xml.DomUtils;
  */
 public class BeanDefinitionParserDelegate {
 
+	/**
+	 * 项目中默认使用的命名空间一般都是这个
+	 */
 	public static final String BEANS_NAMESPACE_URI = "http://www.springframework.org/schema/beans";
 
 	public static final String MULTI_VALUE_ATTRIBUTE_DELIMITERS = ",; ";
@@ -551,7 +554,7 @@ public class BeanDefinitionParserDelegate {
 		}
 
 		try {
-			// 创建用于承载属性的 AbstractBeanDefinition 实例
+			// 创建用于承载 XML 属性配置的 AbstractBeanDefinition 实例
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
 			// 解析 <bean /> 标签的各种属性
