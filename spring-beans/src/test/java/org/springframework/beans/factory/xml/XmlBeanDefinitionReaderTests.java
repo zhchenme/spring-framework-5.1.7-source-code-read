@@ -16,13 +16,7 @@
 
 package org.springframework.beans.factory.xml;
 
-import java.io.IOException;
-import java.util.Arrays;
-
-import jdk.nashorn.internal.parser.JSONParser;
 import org.junit.Test;
-import org.xml.sax.InputSource;
-
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -32,6 +26,9 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.tests.sample.beans.TestBean;
 import org.springframework.util.ObjectUtils;
+import org.xml.sax.InputSource;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
@@ -66,11 +63,9 @@ public class XmlBeanDefinitionReaderTests {
 	}
 
 	@Test
-	public void withImport() throws IOException {
-		// TODO
+	public void withImport() {
 		SimpleBeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		Resource resource = new ClassPathResource("import.xml", getClass());
-		System.out.println("========" + resource.contentLength());
 		new XmlBeanDefinitionReader(registry).loadBeanDefinitions(resource);
 		testBeanDefinitions(registry);
 	}
