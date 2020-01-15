@@ -134,7 +134,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		// 创建一个新的 BeanDefinitionParserDelegate 对象
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
-		// 检查 <bean> 标签的命名空间是否为空，或者是 http://www.springframework.org/schema/beans
+		// 检查 <beans /> 标签的命名空间是否为空，或者是 http://www.springframework.org/schema/beans
 		if (this.delegate.isDefaultNamespace(root)) {
 			// 获取 profile 的值，beans 标签可以设置 profile 属性用于多环境配置管理
 			String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
