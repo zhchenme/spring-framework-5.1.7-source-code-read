@@ -47,7 +47,6 @@ public class XmlBeanDefinitionReaderTests {
 
 	@Test(expected = BeanDefinitionStoreException.class)
 	public void withOpenInputStream() {
-		// DIDI
 		SimpleBeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		Resource resource = new InputStreamResource(getClass().getResourceAsStream("test.xml"));
 		new XmlBeanDefinitionReader(registry).loadBeanDefinitions(resource);

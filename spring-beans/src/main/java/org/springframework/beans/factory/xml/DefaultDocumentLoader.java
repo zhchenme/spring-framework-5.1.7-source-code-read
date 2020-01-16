@@ -64,6 +64,13 @@ public class DefaultDocumentLoader implements DocumentLoader {
 	/**
 	 * Load the {@link Document} at the supplied {@link InputSource} using the standard JAXP-configured
 	 * XML parser.
+	 *
+	 * XML 解析策略：
+	 * DOM：DOM 解析器在任何处理开始之前，必须把整棵树放在内存，所以 DOM 解析器的内存使用量完全根据输入资料的大小
+	 * SAX：只在读取数据时检查数据，不需要保存在内存中，在某个条件得到满足时停止解析，不必解析整个文档
+	 * JDO：
+	 * DOM4J：
+	 *
 	 */
 	@Override
 	public Document loadDocument(InputSource inputSource, EntityResolver entityResolver,
@@ -76,6 +83,8 @@ public class DefaultDocumentLoader implements DocumentLoader {
 		}
 		// 创建一个 DocumentBuilder
 		DocumentBuilder builder = createDocumentBuilder(factory, entityResolver, errorHandler);
+		// DocumentBuilder：Note that this class reuses several classes from the SAX API
+		// 因此可以视为 SAX 解析，errorHandler 策略 SimpleSaxErrorHandler
 		return builder.parse(inputSource);
 	}
 

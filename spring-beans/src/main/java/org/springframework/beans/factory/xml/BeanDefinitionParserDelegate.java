@@ -453,12 +453,12 @@ public class BeanDefinitionParserDelegate {
 		// 获取 AbstractBeanDefinition 实例，该对象中保存了 <bean /> 标签中的基本属性信息
 		AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
 		if (beanDefinition != null) {
-			// TODO 定义一个 bean 并不一必须定要为其定义 id、name、class 属性
+			// TODO 定义一个 bean 并不一必须定要为其定义 id、name 属性
 			// 如果没有定义 id 或者 name 属性，则想办法生成 beanName
 			if (!StringUtils.hasText(beanName)) {
 				try {
 					if (containingBean != null) {
-						// 使用 className 属性生成 beanName
+						// 使用 className 属性生成 beanName -> beanName + # + beanDefinition 哈希值的十六进制字符
 						beanName = BeanDefinitionReaderUtils.generateBeanName(
 								beanDefinition, this.readerContext.getRegistry(), true);
 					}
@@ -557,10 +557,14 @@ public class BeanDefinitionParserDelegate {
 			// 创建用于承载 XML 属性配置的 AbstractBeanDefinition 实例
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
-			// 解析 <bean /> 标签的各种属性
+			// 解析 <bean /> 标签的各种属性，比如 scope、lazy-init、autowire 等
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			// 解析描述信息
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
+
+			/**
+			 * 以下处理 <bean /> 的子标签，这里可以优化，循环一次对子标签分类处理，下面每处理一个子标签就需要循环一次 <bean />
+			 */
 
 			// 处理 <meta/>
 			parseMetaElements(ele, bd);

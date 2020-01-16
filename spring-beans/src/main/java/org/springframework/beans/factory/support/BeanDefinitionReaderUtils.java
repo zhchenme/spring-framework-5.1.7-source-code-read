@@ -171,11 +171,11 @@ public abstract class BeanDefinitionReaderUtils {
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
 
 		// Register aliases for bean name, if any.
-		// 获取所有的别名，并根据 beanName 注册别名
+		// 从 BeanDefinition 中获取所有的别名，并根据 beanName 注册别名
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {
 			for (String alias : aliases) {
-				// 注册所有的别名
+				// 注册所有的别名，保存到 aliasMap 中
 				registry.registerAlias(beanName, alias);
 			}
 		}

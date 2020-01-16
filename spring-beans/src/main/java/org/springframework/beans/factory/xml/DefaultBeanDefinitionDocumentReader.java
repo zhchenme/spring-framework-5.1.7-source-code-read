@@ -178,7 +178,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * @param root the DOM root element of the document
 	 */
 	protected void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {
-		// 根节点使用默认名称空间，执行默认解析 <bean id="" class="" />
+		// 命名空间检查，Spring XML 中不仅可以配置 <beans /> 标签
 		if (delegate.isDefaultNamespace(root)) {
 			// 获取所有的子节点
 			NodeList nl = root.getChildNodes();
@@ -209,21 +209,24 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * @param delegate
 	 */
 	private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
-		// import
+		// import，samples：<import resource="classpath:/org/springframework/beans/factory/xml/test.xml"/>
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
+			// 根据 resource 值定位资源，递归调用 loadBeanDefinitions 逐个加载
 			importBeanDefinitionResource(ele);
 		}
 		// alias
 		else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
+			// 处理别名标签，最终注册到 aliasMap 中
 			processAliasRegistration(ele);
 		}
 		// bean
 		else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
+			// 转化成 BeanDefinition
 			processBeanDefinition(ele, delegate);
 		}
 		// beans
 		else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
-			// recurse，递归
+			// 递归调用
 			doRegisterBeanDefinitions(ele);
 		}
 	}
@@ -348,7 +351,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		// 处理 <bean /> 标签，把标签属性与子标签信息封装在 BeanDefinition 中，解析成功返回 BeanDefinitionHolder 对象
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
 		if (bdHolder != null) {
-			// 进行自定义标签处理
+			// 装饰 BeanDefinition
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// Register the final decorated instance.
