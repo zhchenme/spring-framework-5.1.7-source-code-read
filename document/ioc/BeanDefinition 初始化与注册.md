@@ -2,7 +2,7 @@
 
 #### 1.1 什么是 BeanDefinition
 
-在一般的 Spring 项目中，主要通过 XML 的方式配置 bean，而 `BeanDefinition` 就是 XML 配置属性的载体，XML 文件首先会被转化成 `Document` 对象，然后解析 `Document`，把 XML 中 `<bean />` 标签转化成 `BeanDefinition` 供 IoC 容器创建 bean 时使用。
+在一般的 Spring 项目中，主要通过 XML 的方式配置 bean，而 `BeanDefinition` 就是 XML 配置属性的载体，XML 文件首先会被转化成 `Document` 对象，通过解析 `Document`，把 XML 中 `<bean />` 标签转化成 `BeanDefinition` 供 IoC 容器创建 bean 时使用。
 
 我们可以来做个测试。
 
@@ -154,7 +154,7 @@ Debug 测试类入口：`org.springframework.beans.factory.xml.XmlBeanDefinition
     }
 ```
 
-上面涉及到几个关于 XML 的知识点，下面简单的介绍一下，最后面有列出参考文章，有兴趣的可以深入理解。
+上面涉及到几个关于 XML 的知识点，下面简单的介绍一下，最后有列出参考文章，有兴趣的可以翻翻。
 
 - `EntityResolver`：XML 文件解析器
 - `errorHandler`：解析出错处理机制
@@ -288,7 +288,7 @@ Debug 测试类入口：`org.springframework.beans.factory.xml.XmlBeanDefinition
 
  1. 利用反射创建 `BeanDefinitionDocumentReader` 对象
  2. 获取已经注册的 `BeanDefinition` 的数量，其实就是 `beanDefinitionMap` 的 size 大小
- 3. 检查 `<beans />` 标签命名空间是否为空，或者配置为 `http://www.springframework.org/schema/beans`，如果条件满足，获取 `profile` 指定的环境属性值，判断指定的环境是否处于活跃状态，非活跃状态直接返回，不会对 `Document` 进行解析，关于 `profile` 属性的作用，最后会给一些参考文章
+ 3. 检查 `<beans />` 标签命名空间是否为空，或者配置为 `http://www.springframework.org/schema/beans`，如果条件满足，获取 `profile` 指定的环境属性值，判断指定的环境是否有处于启用状态的，都不启用直接返回，不会对 `Document` 进行解析，关于 `profile` 属性的作用，最后会给一些参考文章
  4. 解析前置处理，空实现，可自定义
  5. 如果是默认命名空间，获取 <beans /> 下所有子标签，进行遍历，判断子标签是 `import`、`alias`、`bean` 还是 `beans`
  6. 解析后置处理，空实现，可自定义
@@ -498,7 +498,7 @@ Debug 测试类入口：`org.springframework.beans.factory.xml.XmlBeanDefinition
 
 因为测试类中定义的是 `SimpleBeanDefinitionRegistry`，因此应该定位到 `SimpleBeanDefinitionRegistry` 中的 `registerBeanDefinition`，这里的处理流程很简单，直接把 `BeanDefinition` 与 `beanName` 关联保存到 `beanDefinitionMap` 中。
 
-`SimpleBeanDefinitionRegistry` 并不是一个工厂，不具备初始化 bean 的能力。后面在创建 bean 的流程中还会接触到 `beanDefinition` 注册流程，稍微比这个复杂些，但是其核心逻辑都是保存到 `beanDefinitionMap` 。
+`SimpleBeanDefinitionRegistry` 并不是一个工厂，不具备初始化 bean 的能力。后面在创建 bean 的流程中还会接触到 `DefaultListableBeanFactory#registerBeanDefinition` 注册流程，稍微比这个复杂些，但是其核心逻辑都是保存到 `beanDefinitionMap` 。
 
 ### 参考阅读
 
