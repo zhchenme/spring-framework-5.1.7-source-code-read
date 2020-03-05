@@ -286,11 +286,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			@Nullable final Object[] args, boolean typeCheckOnly) throws BeansException {
 
 		// 返回 bean 名称，剥离工厂引用前缀（&），判断从 alias 中获取对应映射的 beanName
-		// 这个 name 可能是 beanName，aliasName 或者 factoryBean
+		// 这个 name 可能是 beanName，aliasName 或者 factoryBean，描述为 factoryBean 其实并不算准确
 		/**
 		 * & 开头表示获取 FactoryBean 本身，而非 FactoryBean 中对应的 bean 实例
-		 * // TODO 那是怎么获取 FactoryBean 本身实例的？答案在 getObjectForBeanInstance 方法传了 name 字段
+		 * // TODO 那是怎么获取 FactoryBean 本身实例的？答案在 getObjectForBeanInstance 方法 传的是 name 而不是 beanName
 		 *
+		 * transformedBeanName 方法主要用来剥离 beanName 的 & 前缀
 		 */
 		final String beanName = transformedBeanName(name);
 		Object bean;
@@ -323,7 +324,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		/**
 		 * 单例缓存中没有实例，则可能表明该实例还没有创建或者该实例在父容器中已经创建了，所以需要先检查一次父容器
-		 *
 		 */
 		else {
 			// Fail if we're already creating this bean instance:
@@ -349,7 +349,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			// parentBeanFactory 不为空且 beanDefinitionMap 中已经保存过 beanName 对应的 BeanDefinition
 			if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 				// Not found -> check parent.
-				// 获取 name 对应的 beanName，如果 name 是以 & 字符开头，则返回 & + beanName
+				// 获取 name 对应的 beanName，如果 name 是以 &&&&... 字符开头，则返回 & + beanName
 				String nameToLookup = originalBeanName(name);
 				// 如果，父类容器为 AbstractBeanFactory ，直接递归查找返回
 				if (parentBeanFactory instanceof AbstractBeanFactory) {
@@ -373,6 +373,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			if (!typeCheckOnly) {
+				// 标记 bean 正在创建
 				markBeanAsCreated(beanName);
 			}
 
@@ -1359,7 +1360,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * Return a RootBeanDefinition for the given bean, by merging with the
 	 * parent if the given bean's definition is a child bean definition.
 	 *
-	 * TODO
+	 * 合并父子 beanDefinition
+	 * 1.如果没有父 beanDefinition 则升级为 父 beanDefinition
+	 * 2.若存在父 beanDefinition，则进行合并
+	 * 3.若没有指定 bean 的作用域，则默认为单例模式
+	 * 4.绑定 beanName 与 RootBeanDefinition 的关系，mergedBeanDefinitions
+	 *
+	 *
 	 *
 	 * @param beanName the name of the bean definition
 	 * @param bd the original bean definition (Root/ChildBeanDefinition)
@@ -1376,7 +1383,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			RootBeanDefinition mbd = null;
 
 			// Check with full lock now in order to enforce the same merged instance.
-			// TODO 2019-08-27 感觉没有意义啊这一步
 			if (containingBd == null) {
 				mbd = this.mergedBeanDefinitions.get(beanName);
 			}
@@ -1442,6 +1448,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// (it might still get re-merged later on in order to pick up metadata changes)
 				if (containingBd == null && isCacheBeanMetadata()) {
 					// 将 beanName 与 RootBeanDefinition 进行关联
+					// TODO 2020/03/05
 					this.mergedBeanDefinitions.put(beanName, mbd);
 				}
 			}

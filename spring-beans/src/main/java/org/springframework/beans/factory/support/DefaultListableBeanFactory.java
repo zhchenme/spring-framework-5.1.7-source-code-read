@@ -770,7 +770,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	public BeanDefinition getBeanDefinition(String beanName) throws NoSuchBeanDefinitionException {
 		// 从 beanDefinitionMap 中根据 beanName 获取对应的 beanDefinition
 		BeanDefinition bd = this.beanDefinitionMap.get(beanName);
-		// 不存在抛出异常
+		// 不存在抛出异常，在程序启动 IoC 容器创建时，已经对 beanDefinition 进行了初始化
 		if (bd == null) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("No bean named '" + beanName + "' found in " + this);
