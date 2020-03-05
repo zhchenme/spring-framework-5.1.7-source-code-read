@@ -105,6 +105,7 @@ public abstract class AbstractRefreshableConfigApplicationContext extends Abstra
 	 */
 	@Nullable
 	protected String[] getConfigLocations() {
+		// todo
 		return (this.configLocations != null ? this.configLocations : getDefaultConfigLocations());
 	}
 

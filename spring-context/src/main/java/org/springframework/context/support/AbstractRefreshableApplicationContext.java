@@ -122,7 +122,7 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {
-		// 如果存在 beanFactory 则销毁，并销毁创建的 bean
+		// 如果存在 beanFactory 则销毁，并销毁创建的 bean，就是清空各种缓存 map
 		if (hasBeanFactory()) {
 			destroyBeans();
 			closeBeanFactory();
@@ -130,9 +130,9 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 		try {
 			// 创建 BeanFactory
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
-			// 设置序列号 ID
+			// 设置序列 ID
 			beanFactory.setSerializationId(getId());
-			// 设置是否允许循环依赖与覆盖 beanDefinition
+			// 设置是否允许循环依赖与覆盖 beanDefinition，默认都是不允许的，set 方法没有调用
 			customizeBeanFactory(beanFactory);
 			// 加载 beanDefinition
 			loadBeanDefinitions(beanFactory);
