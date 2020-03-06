@@ -646,6 +646,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				// TODO
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
