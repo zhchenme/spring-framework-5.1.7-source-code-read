@@ -54,6 +54,7 @@ final class PostProcessorRegistrationDelegate {
 
 	/**
 	 * 按次序执行仅限于 BeanDefinitionRegistryPostProcessor，beanFactoryPostProcessors 不会按类型区分，而是一次全部执行
+	 * 主意顺序，先 BeanDefinitionRegistryPostProcessor 后 beanFactoryPostProcessors
 	 *
 	 * 1.遍历 beanFactoryPostProcessors，BeanDefinitionRegistryPostProcessor 与 BeanFactoryPostProcessor 区分类别后加入到不同集合
 	 * 2.找出 BeanDefinitionRegistryPostProcessor 是 PriorityOrdered 的，依次执行
@@ -214,7 +215,7 @@ final class PostProcessorRegistrationDelegate {
 		// a bean is created during BeanPostProcessor instantiation, i.e. when
 		// a bean is not eligible for getting processed by all BeanPostProcessors.
 		int beanProcessorTargetCount = beanFactory.getBeanPostProcessorCount() + 1 + postProcessorNames.length;
-		// 记录 BeanPostProcessor 的数量
+		// 记录 BeanPostProcessor 的目标数量
 		beanFactory.addBeanPostProcessor(new BeanPostProcessorChecker(beanFactory, beanProcessorTargetCount));
 
 		// Separate between BeanPostProcessors that implement PriorityOrdered,
@@ -225,7 +226,12 @@ final class PostProcessorRegistrationDelegate {
 		List<String> orderedPostProcessorNames = new ArrayList<>();
 		// 不保证顺序
 		List<String> nonOrderedPostProcessorNames = new ArrayList<>();
-		// 遍历所有的 postProcessorName
+		/**
+		 * 遍历所有的 postProcessorName，分三种情况，与上一步执行 BeanPostProcessor 类似
+		 * 1.实现了 PriorityOrdered 接口
+		 * 2.实现了 Ordered 接口
+		 * 3.什么都未实现
+		 */
 		for (String ppName : postProcessorNames) {
 			if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
 				BeanPostProcessor pp = beanFactory.getBean(ppName, BeanPostProcessor.class);

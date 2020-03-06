@@ -592,7 +592,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			 * Prepare the bean factory for use in this context.
 			 *
 			 * 1.设置 bean 的类加载器，解析器
-			 * 2.设置与排除对应 beanPostProcessor
+			 * 2.设置与排除对应 beanPostProcessor，这里设置了 ApplicationContextAwareProcessor，ApplicationContextAwareProcessor 会处理对应的 XAware 接口，
+			 * 可以联想项目中经常使用类继承 ApplicationAware，然后获取到 ApplicationContext，这个 ApplicationContext 就是通过 BeanPostProcessor 实现的
+			 * @see ApplicationContextAwareProcessor
 			 * 3.设置依赖信息，TODO 没看懂
 			 * 4.注册默认的环境 bean 信息，比如：environment、systemProperties、systemEnvironment
 			 */
@@ -604,27 +606,46 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+
+				/**
+				 * 主要用来执行 BeanDefinitionRegistryPostProcessor 与 BeanFactoryPostProcessor
+				 * 按次序执行仅限于 BeanDefinitionRegistryPostProcessor，beanFactoryPostProcessors 不会按类型区分，而是一次全部执行
+				 * 注意顺序，先 BeanDefinitionRegistryPostProcessor 后 beanFactoryPostProcessors
+				 */
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				/**
+				 * 类似上一步，只不过是注册所有的 BeanPostProcessor，只注册并未执行
+				 * 并默认注册了一个 ApplicationListenerDetector，当 Bean 实例化时调用，这个 ApplicationListenerDetector 不是在上面 prepareBeanFactory 方法中注册过了吗？？
+				 */
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
-				// 初始化资源文件，eg：国际化
+				/**
+				 * 初始化国际化信息，默认会在 BeanFactory 中注册一个 MessageSource bean
+				 */
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				/**
+				 * 初始化事件广播器
+				 */
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
-				// 子类进行扩展
+				// 模板方法，空实现，子类进行扩展
 				onRefresh();
 
 				// Check for listener beans and register them.
+				/**
+				 * 注册所有实现 ApplicationListener 的 bean 作为监听器
+				 * 监听器会在 prepareBeanFactory 方法中通过 ApplicationListenerDetector BeanPostProcessor 进行初始化，并通过 ApplicationEventMulticaster 进行事件传播
+				 * TODO 传播的是个啥？？？
+				 */
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
-				// TODO 19-08-09 初始化所有非懒加载的单例 bean
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
