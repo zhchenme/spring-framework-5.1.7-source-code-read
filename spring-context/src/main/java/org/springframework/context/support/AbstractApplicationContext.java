@@ -563,6 +563,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * @throws BeansException
 	 * @throws IllegalStateException
+	 *
+	 * 2020/03/07 get it.
 	 */
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
@@ -646,7 +648,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
-				// TODO
+				/**
+				 * 1.初始化 property 转换服务 bean
+				 * 2.设置注解 value 解析器
+				 * 3.LoadTimeWeaverAware 目前还没有搞懂是干啥的
+				 * 4.禁用临时类加载器，并冻结配置文件
+				 * 5.遍历所有的 beanDefinitionNames，根据 beanDefinitionName 获取 merged 过的 beanDefinition，并过滤懒加载与非单例的 beanDefinition
+				 * 6..判断是否是 FactoryBean，走不同的分支创建 bean（getBean）
+				 * 7.3.单例 bean 创建完成，判断 bean 是否是 SmartInitializingSingleton（实现该接口），如果是则在单例 bean 创建完成后执行回调
+				 */
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
@@ -658,9 +668,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				}
 
 				// Destroy already created singletons to avoid dangling resources.
+				// 销毁 bean 相关资源，防止被占用
 				destroyBeans();
 
 				// Reset 'active' flag.
+				// 修改活跃状态为 false
 				cancelRefresh(ex);
 
 				// Propagate exception to caller.
@@ -668,6 +680,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			} finally {
 				// Reset common introspection caches in Spring's core, since we
 				// might not ever need metadata for singleton beans anymore...
+				// 清除反射相关的缓存
 				resetCommonCaches();
 			}
 		}
@@ -961,6 +974,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
 		// Initialize conversion service for this context.
+		// 初始化 property 转换服务 bean
 		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
 				beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
 			beanFactory.setConversionService(
@@ -970,23 +984,30 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Register a default embedded value resolver if no bean post-processor
 		// (such as a PropertyPlaceholderConfigurer bean) registered any before:
 		// at this point, primarily for resolution in annotation attribute values.
+		// 设置注解 value 解析器
 		if (!beanFactory.hasEmbeddedValueResolver()) {
 			beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal));
 		}
 
 		// Initialize LoadTimeWeaverAware beans early to allow for registering their transformers early.
+		// TODO 这个是干嘛用的
 		String[] weaverAwareNames = beanFactory.getBeanNamesForType(LoadTimeWeaverAware.class, false, false);
 		for (String weaverAwareName : weaverAwareNames) {
 			getBean(weaverAwareName);
 		}
 
 		// Stop using the temporary ClassLoader for type matching.
+		// 禁用临时类加载器
 		beanFactory.setTempClassLoader(null);
 
 		// Allow for caching all bean definition metadata, not expecting further changes.
+		// 冻结配置，不允许修改
 		beanFactory.freezeConfiguration();
 
 		// Instantiate all remaining (non-lazy-init) singletons.
+		/**
+		 * 初始化所有非懒加载的单例 bean
+		 */
 		beanFactory.preInstantiateSingletons();
 	}
 

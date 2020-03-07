@@ -815,6 +815,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return (this.configurationFrozen || super.isBeanEligibleForMetadataCaching(beanName));
 	}
 
+	/**
+	 * 1.遍历所有的 beanDefinitionNames，根据 beanDefinitionName 获取 merged 过的 beanDefinition，并过滤懒加载与非单例的 beanDefinition
+	 * 2.判断是否是 FactoryBean，走不同的分支创建 bean（getBean）
+	 * 3.单例 bean 创建完成，判断 bean 是否是 SmartInitializingSingleton（实现该接口），如果是则在单例 bean 创建完成后执行回调
+	 *
+	 * @throws BeansException
+	 */
 	@Override
 	public void preInstantiateSingletons() throws BeansException {
 		if (logger.isTraceEnabled()) {
@@ -823,14 +830,21 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		// Iterate over a copy to allow for init methods which in turn register new bean definitions.
 		// While this may not be part of the regular factory bootstrap, it does otherwise work fine.
+		// 获取所有的 beanDefinitionName
 		List<String> beanNames = new ArrayList<>(this.beanDefinitionNames);
 
 		// Trigger initialization of all non-lazy singleton beans...
 		// 通过循环初始化所有非懒加载的 bean
 		for (String beanName : beanNames) {
+			// 从 mergedBeanDefinitions（map） 中获取所有已经 merged 过的 RootBeanDefinition
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
+			// 过滤非单例与懒加载的 beanDefinition
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
-				// 如果是 factoryBean，获取 factoryBean 本身时需要加上 '&'
+				/**
+				 * 判断是否是 FactoryBean 类型，一路断点到一个 native 方法，有兴趣的可以 debug 下
+				 *
+				 * 如果是 factoryBean，获取 factoryBean 本身时需要加上 '&'
+				 */
 				if (isFactoryBean(beanName)) {
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
 					if (bean instanceof FactoryBean) {
@@ -858,7 +872,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		// Trigger post-initialization callback for all applicable beans...
 		for (String beanName : beanNames) {
+			// 上面 bean 已创建完成，从缓存 map 获取单例 bean
 			Object singletonInstance = getSingleton(beanName);
+			// 单例 bean 创建完成回调，执行 afterSingletonsInstantiated 方法
 			if (singletonInstance instanceof SmartInitializingSingleton) {
 				final SmartInitializingSingleton smartSingleton = (SmartInitializingSingleton) singletonInstance;
 				if (System.getSecurityManager() != null) {
