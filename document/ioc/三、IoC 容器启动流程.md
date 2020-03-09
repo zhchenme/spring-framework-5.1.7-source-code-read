@@ -1,6 +1,6 @@
 ```java
 
-	private static final String configLocation = "applicationContext.xml";
+    private static final String configLocation = "applicationContext.xml";
 
     @Test
     public void beanTest() {
@@ -18,20 +18,20 @@ IoC 的源码也跟踪了一段时间，后来在 `ClassPathXmlApplicationContex
 一切都要从 `ClassPathXmlApplicationContext` 的构造函数说起。
 
 ```java
-	public ClassPathXmlApplicationContext(String configLocation) throws BeansException {
-		this(new String[] {configLocation}, true, null);
-	}
+    public ClassPathXmlApplicationContext(String configLocation) throws BeansException {
+        this(new String[] {configLocation}, true, null);
+    }
 
-	public ClassPathXmlApplicationContext(
-			String[] configLocations, boolean refresh, @Nullable ApplicationContext parent)
-			throws BeansException {
+    public ClassPathXmlApplicationContext(
+            String[] configLocations, boolean refresh, @Nullable ApplicationContext parent)
+            throws BeansException {
 
-		super(parent);
-		setConfigLocations(configLocations);
-		if (refresh) {
-			refresh();
-		}
-	}
+        super(parent);
+        setConfigLocations(configLocations);
+        if (refresh) {
+            refresh();
+        }
+    }
 ```
 
 `ClassPathXmlApplicationContext` 的构造函数主要做了 3 件事：
@@ -43,18 +43,18 @@ IoC 的源码也跟踪了一段时间，后来在 `ClassPathXmlApplicationContex
 ### 2.setConfigLocations
 
 ```java
-	public void setConfigLocations(@Nullable String... locations) {
-		if (locations != null) {
-			Assert.noNullElements(locations, "Config locations must not be null");
-			this.configLocations = new String[locations.length];
-			for (int i = 0; i < locations.length; i++) {
-				this.configLocations[i] = resolvePath(locations[i]).trim();
-			}
-		}
-		else {
-			this.configLocations = null;
-		}
-	}
+    public void setConfigLocations(@Nullable String... locations) {
+        if (locations != null) {
+            Assert.noNullElements(locations, "Config locations must not be null");
+            this.configLocations = new String[locations.length];
+            for (int i = 0; i < locations.length; i++) {
+                this.configLocations[i] = resolvePath(locations[i]).trim();
+            }
+        }
+        else {
+            this.configLocations = null;
+        }
+    }
 ```
 
 遍历配置文件数组，将解析过的文件路径添加到 `configLocations` 数组中，后面初始化 `beanDefitnion` 中会用该该数组。
@@ -64,55 +64,55 @@ IoC 的源码也跟踪了一段时间，后来在 `ClassPathXmlApplicationContex
 
 ```java
 @Override
-	public void refresh() throws BeansException, IllegalStateException {
-		// 线程安全
-		synchronized (this.startupShutdownMonitor) {
-			// Prepare this context for refreshing.
-			prepareRefresh();
+    public void refresh() throws BeansException, IllegalStateException {
+        // 线程安全
+        synchronized (this.startupShutdownMonitor) {
+            // Prepare this context for refreshing.
+            prepareRefresh();
 
-			// Tell the subclass to refresh the internal bean factory.
-			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
+            // Tell the subclass to refresh the internal bean factory.
+            ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
-			// Prepare the bean factory for use in this context.
-			prepareBeanFactory(beanFactory);
+            // Prepare the bean factory for use in this context.
+            prepareBeanFactory(beanFactory);
 
-			try {
-				// Allows post-processing of the bean factory in context subclasses.
-				postProcessBeanFactory(beanFactory);
+            try {
+                // Allows post-processing of the bean factory in context subclasses.
+                postProcessBeanFactory(beanFactory);
 
-				// Invoke factory processors registered as beans in the context.
-				invokeBeanFactoryPostProcessors(beanFactory);
+                // Invoke factory processors registered as beans in the context.
+                invokeBeanFactoryPostProcessors(beanFactory);
 
-				// Register bean processors that intercept bean creation.
-				registerBeanPostProcessors(beanFactory);
+                // Register bean processors that intercept bean creation.
+                registerBeanPostProcessors(beanFactory);
 
-				// Initialize message source for this context.
-				initMessageSource();
+                // Initialize message source for this context.
+                initMessageSource();
 
-				// Initialize event multicaster for this context.
-				initApplicationEventMulticaster();
+                // Initialize event multicaster for this context.
+                initApplicationEventMulticaster();
 
-				// Initialize other special beans in specific context subclasses.
-				onRefresh();
+                // Initialize other special beans in specific context subclasses.
+                onRefresh();
 
-				// Check for listener beans and register them.
-				registerListeners();
+                // Check for listener beans and register them.
+                registerListeners();
 
-				// Instantiate all remaining (non-lazy-init) singletons.
-				finishBeanFactoryInitialization(beanFactory);
+                // Instantiate all remaining (non-lazy-init) singletons.
+                finishBeanFactoryInitialization(beanFactory);
 
-				// Last step: publish corresponding event.
-				finishRefresh();
-			}
+                // Last step: publish corresponding event.
+                finishRefresh();
+            }
 
-			catch (BeansException ex) {
-			}
+            catch (BeansException ex) {
+            }
 
-			finally {
-				resetCommonCaches();
-			}
-		}
-	}
+            finally {
+                resetCommonCaches();
+            }
+        }
+    }
 ```
 
 上面简化了一些无用的代码，IoC 容器启动的流程就是通过 `refresh` 方法实现的，流程比较复杂，下面分步来总结。
@@ -120,40 +120,40 @@ IoC 的源码也跟踪了一段时间，后来在 `ClassPathXmlApplicationContex
 ### 4.prepareRefresh
 
 ```java
-	protected void prepareRefresh() {
-		this.startupDate = System.currentTimeMillis();
-		this.closed.set(false);
-		this.active.set(true);
+    protected void prepareRefresh() {
+        this.startupDate = System.currentTimeMillis();
+        this.closed.set(false);
+        this.active.set(true);
 
-		if (logger.isDebugEnabled()) {
-			if (logger.isTraceEnabled()) {
-				logger.trace("Refreshing " + this);
-			} else {
-				logger.debug("Refreshing " + getDisplayName());
-			}
-		}
+        if (logger.isDebugEnabled()) {
+            if (logger.isTraceEnabled()) {
+                logger.trace("Refreshing " + this);
+            } else {
+                logger.debug("Refreshing " + getDisplayName());
+            }
+        }
 
-		// Initialize any placeholder property sources in the context environment.
-		();
+        // Initialize any placeholder property sources in the context environment.
+        ();
 
-		// Validate that all properties marked as required are resolvable:
-		// see ConfigurablePropertyResolver#setRequiredProperties
-		getEnvironment().validateRequiredProperties();
+        // Validate that all properties marked as required are resolvable:
+        // see ConfigurablePropertyResolver#setRequiredProperties
+        getEnvironment().validateRequiredProperties();
 
-		// Store pre-refresh ApplicationListeners...
-		// 启动监听器，此时并未注册
-		if (this.earlyApplicationListeners == null) {
-			this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);
-		} else {
-			// Reset local application listeners to pre-refresh state.
-			this.applicationListeners.clear();
-			this.applicationListeners.addAll(this.earlyApplicationListeners);
-		}
+        // Store pre-refresh ApplicationListeners...
+        // 启动监听器，此时并未注册
+        if (this.earlyApplicationListeners == null) {
+            this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);
+        } else {
+            // Reset local application listeners to pre-refresh state.
+            this.applicationListeners.clear();
+            this.applicationListeners.addAll(this.earlyApplicationListeners);
+        }
 
-		// Allow for the collection of early ApplicationEvents,
-		// to be published once the multicaster is available...
-		this.earlyApplicationEvents = new LinkedHashSet<>();
-	}
+        // Allow for the collection of early ApplicationEvents,
+        // to be published once the multicaster is available...
+        this.earlyApplicationEvents = new LinkedHashSet<>();
+    }
 ```
 
 1.设置启动信息：启动时间，活跃状态
@@ -167,66 +167,66 @@ IoC 的源码也跟踪了一段时间，后来在 `ClassPathXmlApplicationContex
 
 ```java
 
-	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
-		refreshBeanFactory();
-		// 返回 beanFactory
-		return getBeanFactory();
-	}
+    protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
+        refreshBeanFactory();
+        // 返回 beanFactory
+        return getBeanFactory();
+    }
 
-	@Override
-	protected final void refreshBeanFactory() throws BeansException {
-		if (hasBeanFactory()) {
-			destroyBeans();
-			closeBeanFactory();
-		}
-		try {
-			DefaultListableBeanFactory beanFactory = createBeanFactory();
-			beanFactory.setSerializationId(getId());
-			customizeBeanFactory(beanFactory);
-			loadBeanDefinitions(beanFactory);
-			synchronized (this.beanFactoryMonitor) {
-				this.beanFactory = beanFactory;
-			}
-		}
-		catch (IOException ex) {
-			throw new ApplicationContextException("I/O error parsing bean definition source for " + getDisplayName(), ex);
-		}
-	}
+    @Override
+    protected final void refreshBeanFactory() throws BeansException {
+        if (hasBeanFactory()) {
+            destroyBeans();
+            closeBeanFactory();
+        }
+        try {
+            DefaultListableBeanFactory beanFactory = createBeanFactory();
+            beanFactory.setSerializationId(getId());
+            customizeBeanFactory(beanFactory);
+            loadBeanDefinitions(beanFactory);
+            synchronized (this.beanFactoryMonitor) {
+                this.beanFactory = beanFactory;
+            }
+        }
+        catch (IOException ex) {
+            throw new ApplicationContextException("I/O error parsing bean definition source for " + getDisplayName(), ex);
+        }
+    }
 
-	@Override
-	public final ConfigurableListableBeanFactory getBeanFactory() {
-		synchronized (this.beanFactoryMonitor) {
-			if (this.beanFactory == null) {
-				throw new IllegalStateException("BeanFactory not initialized or already closed - " +
-						"call 'refresh' before accessing beans via the ApplicationContext");
-			}
-			return this.beanFactory;
-		}
-	}
+    @Override
+    public final ConfigurableListableBeanFactory getBeanFactory() {
+        synchronized (this.beanFactoryMonitor) {
+            if (this.beanFactory == null) {
+                throw new IllegalStateException("BeanFactory not initialized or already closed - " +
+                        "call 'refresh' before accessing beans via the ApplicationContext");
+            }
+            return this.beanFactory;
+        }
+    }
 ```
 
 `refreshBeanFactory` 方法首先调用了 `refreshBeanFactory` 用于刷新 `beanFactory`：
 
 ```java
-	@Override
-	protected final void refreshBeanFactory() throws BeansException {
-		if (hasBeanFactory()) {
-			destroyBeans();
-			closeBeanFactory();
-		}
-		try {
-			DefaultListableBeanFactory beanFactory = createBeanFactory();
-			beanFactory.setSerializationId(getId());
-			customizeBeanFactory(beanFactory);
-			loadBeanDefinitions(beanFactory);
-			synchronized (this.beanFactoryMonitor) {
-				this.beanFactory = beanFactory;
-			}
-		}
-		catch (IOException ex) {
-			throw new ApplicationContextException("I/O error parsing bean definition source for " + getDisplayName(), ex);
-		}
-	}
+    @Override
+    protected final void refreshBeanFactory() throws BeansException {
+        if (hasBeanFactory()) {
+            destroyBeans();
+            closeBeanFactory();
+        }
+        try {
+            DefaultListableBeanFactory beanFactory = createBeanFactory();
+            beanFactory.setSerializationId(getId());
+            customizeBeanFactory(beanFactory);
+            loadBeanDefinitions(beanFactory);
+            synchronized (this.beanFactoryMonitor) {
+                this.beanFactory = beanFactory;
+            }
+        }
+        catch (IOException ex) {
+            throw new ApplicationContextException("I/O error parsing bean definition source for " + getDisplayName(), ex);
+        }
+    }
 ```
 
  1.如果存在 beanFactory 则销毁，并销毁创建的 bean，就是清空各种缓存 map
@@ -240,50 +240,50 @@ IoC 的源码也跟踪了一段时间，后来在 `ClassPathXmlApplicationContex
 ### 6.prepareBeanFactory
 
 ```java
-	protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-		// Tell the internal bean factory to use the context's class loader etc.
-		// 设置类加载器
-		beanFactory.setBeanClassLoader(getClassLoader());
-		beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
-		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
+    protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+        // Tell the internal bean factory to use the context's class loader etc.
+        // 设置类加载器
+        beanFactory.setBeanClassLoader(getClassLoader());
+        beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
+        beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
-		// Configure the bean factory with context callbacks.
-		// 设置与取消对应 beanPostProcessor
-		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
-		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
-		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
-		beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
-		beanFactory.ignoreDependencyInterface(ApplicationEventPublisherAware.class);
-		beanFactory.ignoreDependencyInterface(MessageSourceAware.class);
-		beanFactory.ignoreDependencyInterface(ApplicationContextAware.class);
+        // Configure the bean factory with context callbacks.
+        // 设置与取消对应 beanPostProcessor
+        beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
+        beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
+        beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
+        beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
+        beanFactory.ignoreDependencyInterface(ApplicationEventPublisherAware.class);
+        beanFactory.ignoreDependencyInterface(MessageSourceAware.class);
+        beanFactory.ignoreDependencyInterface(ApplicationContextAware.class);
 
-		// BeanFactory interface not registered as resolvable type in a plain factory.
-		// MessageSource registered (and found for autowiring) as a bean.
-		beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
-		beanFactory.registerResolvableDependency(ResourceLoader.class, this);
-		beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
-		beanFactory.registerResolvableDependency(ApplicationContext.class, this);
+        // BeanFactory interface not registered as resolvable type in a plain factory.
+        // MessageSource registered (and found for autowiring) as a bean.
+        beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
+        beanFactory.registerResolvableDependency(ResourceLoader.class, this);
+        beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
+        beanFactory.registerResolvableDependency(ApplicationContext.class, this);
 
-		// Register early post-processor for detecting inner beans as ApplicationListeners.
-		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
+        // Register early post-processor for detecting inner beans as ApplicationListeners.
+        beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
-		// Detect a LoadTimeWeaver and prepare for weaving, if found.
-		if (beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
-			beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
-			// Set a temporary ClassLoader for type matching.
-			beanFactory.setTempClassLoader(new ContextTypeMatchClassLoader(beanFactory.getBeanClassLoader()));
-		}
+        // Detect a LoadTimeWeaver and prepare for weaving, if found.
+        if (beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
+            beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
+            // Set a temporary ClassLoader for type matching.
+            beanFactory.setTempClassLoader(new ContextTypeMatchClassLoader(beanFactory.getBeanClassLoader()));
+        }
 
-		// Register default environment beans.
-		// 注册默认的环境 bean 信息，比如：environment、systemProperties、systemEnvironment
-		if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
-			beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
-		}
-		if (!beanFactory.containsLocalBean(SYSTEM_PROPERTIES_BEAN_NAME)) {
-			beanFactory.registerSingleton(SYSTEM_PROPERTIES_BEAN_NAME, getEnvironment().getSystemProperties());
-		}
-		if (!beanFactory.containsLocalBean(SYSTEM_ENVIRONMENT_BEAN_NAME)) {
-			beanFactory.registerSingleton(SYSTEM_ENVIRONMENT_BEAN_NAME, getEnvironment().getSystemEnvironment());
-		}
-	}
+        // Register default environment beans.
+        // 注册默认的环境 bean 信息，比如：environment、systemProperties、systemEnvironment
+        if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
+            beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
+        }
+        if (!beanFactory.containsLocalBean(SYSTEM_PROPERTIES_BEAN_NAME)) {
+            beanFactory.registerSingleton(SYSTEM_PROPERTIES_BEAN_NAME, getEnvironment().getSystemProperties());
+        }
+        if (!beanFactory.containsLocalBean(SYSTEM_ENVIRONMENT_BEAN_NAME)) {
+            beanFactory.registerSingleton(SYSTEM_ENVIRONMENT_BEAN_NAME, getEnvironment().getSystemEnvironment());
+        }
+    }
 ```
