@@ -525,13 +525,15 @@ IoC 的源码也跟踪了一段时间，后来在 `ClassPathXmlApplicationContex
 
 上面的代码很长，其实执行的逻辑很简单，主要用于执行 `BeanDefinitionRegistryPostProcessor` 与 `BeanFactoryPostProcessor`，注意不是 `BeanPostProcessor`。看源码一时间可能不知道这些 `proseccor` 到底有什么用，下面我配置了三种类型的 `processor`，通过一个例子我们直观的来了解一下。
 
-```
+```java
     @Test
     public void beanTest() {
         ApplicationContext applicationContext = new ClassPathXmlApplicationContext(configLocation);
         System.out.println("user -> " + applicationContext.getBean("user"));
     }
 ```
+
+![](https://raw.githubusercontent.com/zchen96/spring-framework-5.1.7-source-code-read/master/image/ioc/processors.png)
 
  - `BeanDefinitionRegistryPostProcessor`： 在 `beanDefinition` 注册之后执行
  - `BeanFactoryPostProcessor`：在 `BeanDefinitionRegistryPostProcessor` 执行完成之后执行
@@ -544,3 +546,196 @@ IoC 的源码也跟踪了一段时间，后来在 `ClassPathXmlApplicationContex
         PostProcessorRegistrationDelegate.registerBeanPostProcessors(beanFactory, this);
     }
 ```
+
+这一个过程和上一个过程很像，不过有一个大的差别是 `registerBeanPostProcessors` 方法是发现并注册所有的 `BeanPostProcessor` 并不会执行。细节代码一大堆这里就不贴出来了。
+
+### 10.initMessageSource
+
+```java
+    protected void initMessageSource() {
+        ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+        if (beanFactory.containsLocalBean(MESSAGE_SOURCE_BEAN_NAME)) {
+            this.messageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME, MessageSource.class);
+            // Make MessageSource aware of parent MessageSource.
+            if (this.parent != null && this.messageSource instanceof HierarchicalMessageSource) {
+                HierarchicalMessageSource hms = (HierarchicalMessageSource) this.messageSource;
+                if (hms.getParentMessageSource() == null) {
+                    // Only set parent context as parent MessageSource if no parent MessageSource
+                    // registered already.
+                    hms.setParentMessageSource(getInternalParentMessageSource());
+                }
+            }
+            if (logger.isTraceEnabled()) {
+                logger.trace("Using MessageSource [" + this.messageSource + "]");
+            }
+        } else {
+            // Use empty MessageSource to be able to accept getMessage calls.
+            DelegatingMessageSource dms = new DelegatingMessageSource();
+            dms.setParentMessageSource(getInternalParentMessageSource());
+            this.messageSource = dms;
+            beanFactory.registerSingleton(MESSAGE_SOURCE_BEAN_NAME, this.messageSource);
+            if (logger.isTraceEnabled()) {
+                logger.trace("No '" + MESSAGE_SOURCE_BEAN_NAME + "' bean, using [" + this.messageSource + "]");
+            }
+        }
+    }
+```
+
+`initMessageSource` 方法用于给容器初始化一个 `messageSource` 用来支持一些国际化的操作。
+
+### 11.initApplicationEventMulticaster
+
+```java
+    protected void initApplicationEventMulticaster() {
+        ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+        if (beanFactory.containsLocalBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME)) {
+            this.applicationEventMulticaster =
+                    beanFactory.getBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, ApplicationEventMulticaster.class);
+            if (logger.isTraceEnabled()) {
+                logger.trace("Using ApplicationEventMulticaster [" + this.applicationEventMulticaster + "]");
+            }
+        } else {
+            this.applicationEventMulticaster = new SimpleApplicationEventMulticaster(beanFactory);
+            beanFactory.registerSingleton(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, this.applicationEventMulticaster);
+            if (logger.isTraceEnabled()) {
+                logger.trace("No '" + APPLICATION_EVENT_MULTICASTER_BEAN_NAME + "' bean, using " +
+                        "[" + this.applicationEventMulticaster.getClass().getSimpleName() + "]");
+            }
+        }
+    }
+```
+
+给容器初始化一个事件多播器，这个具体有什么作用还没有搞懂。
+
+### 12.onRefresh
+
+```java
+    protected void onRefresh() throws BeansException {
+        // For subclasses: do nothing by default.
+    }
+```
+
+`onRefresh` 是一个模板方法，用来自定义一些实现。
+
+### 13.registerListeners
+
+```java
+    protected void registerListeners() {
+        // Register statically specified listeners first.
+        for (ApplicationListener<?> listener : getApplicationListeners()) {
+            getApplicationEventMulticaster().addApplicationListener(listener);
+        }
+
+        // Do not initialize FactoryBeans here: We need to leave all regular beans
+        // uninitialized to let post-processors apply to them!
+        String[] listenerBeanNames = getBeanNamesForType(ApplicationListener.class, true, false);
+        for (String listenerBeanName : listenerBeanNames) {
+            getApplicationEventMulticaster().addApplicationListenerBean(listenerBeanName);
+        }
+
+        // Publish early application events now that we finally have a multicaster...
+        // TODO 下面没有看懂作用是什么
+        Set<ApplicationEvent> earlyEventsToProcess = this.earlyApplicationEvents;
+        this.earlyApplicationEvents = null;
+        if (earlyEventsToProcess != null) {
+            for (ApplicationEvent earlyEvent : earlyEventsToProcess) {
+                getApplicationEventMulticaster().multicastEvent(earlyEvent);
+            }
+        }
+    }
+```
+
+通过 `getBeanNamesForType` 方法获取到所有实现 `ApplicationListener` 的 beanName 的列表，进行注册。
+
+### 14.finishBeanFactoryInitialization
+
+```java
+    protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
+        // Initialize conversion service for this context.
+        // 初始化 property 转换服务 bean
+        if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
+                beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
+            beanFactory.setConversionService(
+                    beanFactory.getBean(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class));
+        }
+
+        // 设置注解 value 解析器
+        if (!beanFactory.hasEmbeddedValueResolver()) {
+            beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal));
+        }
+
+        // Initialize LoadTimeWeaverAware beans early to allow for registering their transformers early.
+        // TODO 这个是干嘛用的
+        String[] weaverAwareNames = beanFactory.getBeanNamesForType(LoadTimeWeaverAware.class, false, false);
+        for (String weaverAwareName : weaverAwareNames) {
+            getBean(weaverAwareName);
+        }
+
+        // Stop using the temporary ClassLoader for type matching.
+        // 禁用临时类加载器
+        beanFactory.setTempClassLoader(null);
+
+        // Allow for caching all bean definition metadata, not expecting further changes.
+        // 冻结配置，不允许修改
+        beanFactory.freezeConfiguration();
+
+        // Instantiate all remaining (non-lazy-init) singletons.
+        /**
+         * 初始化所有非懒加载的单例 bean
+         */
+        beanFactory.preInstantiateSingletons();
+    }
+```
+
+ 1. 初始化 property 转换服务 bean
+ 2. 设置注解 value 解析器
+ 3. `LoadTimeWeaverAware` 目前还没有搞懂是干啥的
+ 4. 禁用临时类加载器，并冻结配置文件
+ 5. 遍历所有的 `beanDefinitionNames`，根据 `beanDefinitionNam`e 获取 merged 过的 `beanDefinitio`n，并过滤懒加载与非单例的 `beanDefinition`
+ 6. 判断是否是 `FactoryBean`，走不同的分支创建 bean（getBean）
+ 7. 单例 bean 创建完成，判断 bean 是否是 `SmartInitializingSingleton`（实现该接口），如果是则在 bean 创建完成后执行回调
+
+ 关于创建 bean 的流程与循环依赖等细节，我会在后续的文章里进行总结，感兴趣的可以留意一下。
+
+### 15.finishRefresh
+    
+```java
+    protected void finishRefresh() {
+        // Clear context-level resource caches (such as ASM metadata from scanning).
+        // 清除资源缓存
+        clearResourceCaches();
+
+        // Initialize lifecycle processor for this context.
+        initLifecycleProcessor();
+
+        // Propagate refresh to lifecycle processor first.
+        getLifecycleProcessor().onRefresh();
+
+        // Publish the final event.
+        publishEvent(new ContextRefreshedEvent(this));
+
+        // Participate in LiveBeansView MBean, if active.
+        LiveBeansView.registerApplicationContext(this);
+    }
+```
+
+ 1. 清除资源缓存
+ 2. 初始化容器生命周期处理器
+ 3. 设置处理器生命周期开始
+ 4. 执行所有 `ApplicationListener`，这里可以详细了解一下监听器
+ 5. `LiveBeansView.registerApplicationContext(this)` 没有看懂什么意思
+
+### 16.resetCommonCaches
+
+```java
+    protected void resetCommonCaches() {
+        ReflectionUtils.clearCache();
+        AnnotationUtils.clearCache();
+        ResolvableType.clearCache();
+        CachedIntrospectionResults.clearClassLoader(getClassLoader());
+    }
+```
+
+当所有步骤完成时清除相关缓存。
+
+
