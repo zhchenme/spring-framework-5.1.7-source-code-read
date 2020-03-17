@@ -643,7 +643,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				/**
 				 * 注册所有实现 ApplicationListener 的 bean 作为监听器
 				 * 监听器会在 prepareBeanFactory 方法中通过 ApplicationListenerDetector BeanPostProcessor 进行初始化，并通过 ApplicationEventMulticaster 进行事件传播
-				 * TODO 传播的是个啥？？？
 				 */
 				registerListeners();
 

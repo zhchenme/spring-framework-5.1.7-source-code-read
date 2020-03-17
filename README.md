@@ -3,3 +3,4 @@
     - [BeanDefinition 初始化与注册.md](2.BeanDefinition%20初始化与注册.md)
     - [IoC 容器启动流程.md](document/ioc/3.IoC%20容器启动流程.md)
     - [Spring 事件发布机制原理分析.md](document/ioc/4.Spring%20事件发布机制原理分析.md)
+    - [bean 创建流程分析.md](document/ioc/5.bean%20创建流程分析.md)
