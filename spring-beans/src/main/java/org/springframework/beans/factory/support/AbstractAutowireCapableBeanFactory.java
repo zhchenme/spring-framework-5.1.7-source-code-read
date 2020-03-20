@@ -1238,7 +1238,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Candidate constructors for autowiring?
-		// 确定需要解析的构造函数
+		// 根据 SmartInstantiationAwareBeanPostProcessor 确定需要解析的构造函数
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		/**
 		 * 下面的条件分支条件用于判断使用什么方式构造 bean 实例，有两种方式可选 - 构造方法自动
@@ -1446,6 +1446,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// to support styles of field injection.
 		boolean continueWithPropertyPopulation = true;
 
+		// 处理 InstantiationAwareBeanPostProcessor 后置处理器
 		if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
@@ -1534,6 +1535,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
 		for (String propertyName : propertyNames) {
+			// 注意这里是处理依赖的 bean，比如 String 类型的属性是不会处理的
 			if (containsBean(propertyName)) {
 				Object bean = getBean(propertyName);
 				pvs.add(propertyName, bean);
@@ -1760,14 +1762,18 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Create a deep copy, resolving any references for values.
 		List<PropertyValue> deepCopy = new ArrayList<>(original.size());
 		boolean resolveNecessary = false;
+		// 遍历属性列表
 		for (PropertyValue pv : original) {
 			// 属性值不需要转换
 			if (pv.isConverted()) {
 				deepCopy.add(pv);
 			}
 			else {
+				// 属性名
 				String propertyName = pv.getName();
+				// 属性值
 				Object originalValue = pv.getValue();
+				// ref 转换
 				Object resolvedValue = valueResolver.resolveValueIfNecessary(pv, originalValue);
 				Object convertedValue = resolvedValue;
 				boolean convertible = bw.isWritableProperty(propertyName) &&

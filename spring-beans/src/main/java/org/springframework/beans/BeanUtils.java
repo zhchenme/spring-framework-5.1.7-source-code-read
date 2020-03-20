@@ -171,7 +171,7 @@ public abstract class BeanUtils {
 			ReflectionUtils.makeAccessible(ctor);
 			// 判断 class 是否是 kotlin 类型的
 			return (KotlinDetector.isKotlinReflectPresent() && KotlinDetector.isKotlinType(ctor.getDeclaringClass()) ?
-					KotlinDelegate.instantiateClass(ctor, args) : ctor.newInstance(args));
+					KotlinDelegate.instantiateClass(ctor, args) : /*反射创建对象*/ctor.newInstance(args));
 		}
 		catch (InstantiationException ex) {
 			throw new BeanInstantiationException(ctor, "Is it an abstract class?", ex);

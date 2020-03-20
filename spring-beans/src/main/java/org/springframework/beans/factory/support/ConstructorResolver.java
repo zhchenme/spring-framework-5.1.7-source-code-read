@@ -180,6 +180,7 @@ class ConstructorResolver {
 			}
 
 			// Need to resolve the constructor.
+			// 是否是构造器注入
 			boolean autowiring = (chosenCtors != null ||
 					mbd.getResolvedAutowireMode() == AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);
 			ConstructorArgumentValues resolvedValues = null;
