@@ -1823,7 +1823,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
 			// Caches object obtained from FactoryBean if it is a singleton.
 			/**
-			 * 如果 mbd 为空，判断当前 FactroyBean 的 beanName 是否已经注册到 beanDefinitionMap 中
+			 * 如果 mbd 为空，判断当前 FactoryBean 的 beanName 是否已经注册到 beanDefinitionMap 中
 			 */
 			if (mbd == null && containsBeanDefinition(beanName)) {
 				// 将存储 XML 配置文件的 GenericBeanDefinition 转换为 RootBeanDefinition，
