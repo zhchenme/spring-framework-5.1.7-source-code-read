@@ -62,9 +62,16 @@ public abstract class AopNamespaceUtils {
 		registerComponentIfNecessary(beanDefinition, parserContext);
 	}
 
+	/**
+	 * 1.注册一个 org.springframework.aop.config.internalAutoProxyCreator 的 beanDefinition
+	 * 2.检查 <aop:config /> 是否配置了 proxy-target-class、expose-proxy，如果有配置，则为 beanDefinition 添加 exposeProxy 与 proxyTargetClass 属性
+	 * 3.注册 ComponentDefinition
+	 *
+	 * @param parserContext
+	 * @param sourceElement
+	 */
 	public static void registerAspectJAutoProxyCreatorIfNecessary(
 			ParserContext parserContext, Element sourceElement) {
-
 		BeanDefinition beanDefinition = AopConfigUtils.registerAspectJAutoProxyCreatorIfNecessary(
 				parserContext.getRegistry(), parserContext.extractSource(sourceElement));
 		useClassProxyingIfNecessary(parserContext.getRegistry(), sourceElement);
@@ -81,6 +88,7 @@ public abstract class AopNamespaceUtils {
 	}
 
 	private static void useClassProxyingIfNecessary(BeanDefinitionRegistry registry, @Nullable Element sourceElement) {
+		// 检查 <aop:config /> 是否配置了 proxy-target-class、expose-proxy，如果有配置，则为 beanDefinition 添加 exposeProxy 与 proxyTargetClass 属性
 		if (sourceElement != null) {
 			boolean proxyTargetClass = Boolean.parseBoolean(sourceElement.getAttribute(PROXY_TARGET_CLASS_ATTRIBUTE));
 			if (proxyTargetClass) {

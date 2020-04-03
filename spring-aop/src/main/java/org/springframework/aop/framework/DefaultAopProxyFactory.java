@@ -48,15 +48,22 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
+		/**
+		 * PoxyConfig 的 isOptimize 方法为 true，这表示让 Spring 自己去优化而不是用户指定
+		 * ProxyConfig 的 isProxyTargetClass 方法为true，这表示配置了 proxy-target-class="true"
+		 * ProxyConfig 满足 hasNoUserSuppliedProxyInterfaces 方法执行结果为 true，这表示 <bean> 对象没有实现任何接口或者实现的接口是 SpringProxy 接口
+		 */
 		if (config.isOptimize() || config.isProxyTargetClass() || hasNoUserSuppliedProxyInterfaces(config)) {
 			Class<?> targetClass = config.getTargetClass();
 			if (targetClass == null) {
 				throw new AopConfigException("TargetSource cannot determine target class: " +
 						"Either an interface or a target is required for proxy creation.");
 			}
+			// 接口使用 jdk 代理
 			if (targetClass.isInterface() || Proxy.isProxyClass(targetClass)) {
 				return new JdkDynamicAopProxy(config);
 			}
+			// 非接口使用 cglib 代理
 			return new ObjenesisCglibAopProxy(config);
 		}
 		else {

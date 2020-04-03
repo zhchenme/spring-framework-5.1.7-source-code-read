@@ -103,6 +103,7 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 				new CompositeComponentDefinition(element.getTagName(), parserContext.extractSource(element));
 		parserContext.pushContainingComponent(compositeDef);
 
+		// 注册 AspectJAwareAdvisorAutoProxyCreator，继承自 BeanPostProcessor
 		configureAutoProxyCreator(parserContext, element);
 
 		// 获取所有子标签
@@ -200,13 +201,14 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 	}
 
 	/**
-	 * 处理 <aop:aspect /> 标签
+	 * 处理 <aop:aspect ref="" id="" /> 标签
 	 *
 	 * @param aspectElement
 	 * @param parserContext
 	 */
 	private void parseAspect(Element aspectElement, ParserContext parserContext) {
 		String aspectId = aspectElement.getAttribute(ID);
+		// 切面 beanName
 		String aspectName = aspectElement.getAttribute(REF);
 
 		try {
@@ -229,6 +231,7 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 				Node node = nodeList.item(i);
 				// 处理通知节点 <aop:before,after, around ... />
 				if (isAdviceNode(node, parserContext)) {
+					// 切面只添加一次 beanReferences
 					if (!adviceFoundAlready) {
 						adviceFoundAlready = true;
 						if (!StringUtils.hasText(aspectName)) {
@@ -239,16 +242,19 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 						}
 						beanReferences.add(new RuntimeBeanReference(aspectName));
 					}
+					//
 					AbstractBeanDefinition advisorDefinition = parseAdvice(
 							aspectName, i, aspectElement, (Element) node, parserContext, beanDefinitions, beanReferences);
 					beanDefinitions.add(advisorDefinition);
 				}
 			}
 
+			// 创建 AspectComponentDefinition
 			AspectComponentDefinition aspectComponentDefinition = createAspectComponentDefinition(
 					aspectElement, aspectId, beanDefinitions, beanReferences, parserContext);
 			parserContext.pushContainingComponent(aspectComponentDefinition);
 
+			// 获取所有切点 element
 			List<Element> pointcuts = DomUtils.getChildElementsByTagName(aspectElement, POINTCUT);
 			for (Element pointcutElement : pointcuts) {
 				parsePointcut(pointcutElement, parserContext);
@@ -332,18 +338,23 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 			this.parseState.push(new AdviceEntry(parserContext.getDelegate().getLocalName(adviceElement)));
 
 			// create the method factory bean
+			// 创建一个 BeanFactory
 			RootBeanDefinition methodDefinition = new RootBeanDefinition(MethodLocatingFactoryBean.class);
+			// 切面 bean（类）
 			methodDefinition.getPropertyValues().add("targetBeanName", aspectName);
+			// 设置切面方法
 			methodDefinition.getPropertyValues().add("methodName", adviceElement.getAttribute("method"));
 			methodDefinition.setSynthetic(true);
 
 			// create instance factory definition
+			// 创建切面 BeanDefinition
 			RootBeanDefinition aspectFactoryDef =
 					new RootBeanDefinition(SimpleBeanFactoryAwareAspectInstanceFactory.class);
 			aspectFactoryDef.getPropertyValues().add("aspectBeanName", aspectName);
 			aspectFactoryDef.setSynthetic(true);
 
 			// register the pointcut
+			// 创建通知 BeanDefinition 并注册切点
 			AbstractBeanDefinition adviceDef = createAdviceDefinition(
 					adviceElement, parserContext, aspectName, order, methodDefinition, aspectFactoryDef,
 					beanDefinitions, beanReferences);
@@ -352,12 +363,14 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 			RootBeanDefinition advisorDefinition = new RootBeanDefinition(AspectJPointcutAdvisor.class);
 			advisorDefinition.setSource(parserContext.extractSource(adviceElement));
 			advisorDefinition.getConstructorArgumentValues().addGenericArgumentValue(adviceDef);
+			// <aop:aspect ref="" order="" />，控制切面方法优先级
 			if (aspectElement.hasAttribute(ORDER_PROPERTY)) {
 				advisorDefinition.getPropertyValues().add(
 						ORDER_PROPERTY, aspectElement.getAttribute(ORDER_PROPERTY));
 			}
 
 			// register the final advisor
+			// 注册通知 BeanDefinition
 			parserContext.getReaderContext().registerWithGeneratedName(advisorDefinition);
 
 			return advisorDefinition;
@@ -378,6 +391,7 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 			RootBeanDefinition methodDef, RootBeanDefinition aspectFactoryDef,
 			List<BeanDefinition> beanDefinitions, List<BeanReference> beanReferences) {
 
+		// 创建通知 BeanDefinition
 		RootBeanDefinition adviceDefinition = new RootBeanDefinition(getAdviceClass(adviceElement, parserContext));
 		adviceDefinition.setSource(parserContext.extractSource(adviceElement));
 
@@ -400,6 +414,10 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 		ConstructorArgumentValues cav = adviceDefinition.getConstructorArgumentValues();
 		cav.addIndexedArgumentValue(METHOD_INDEX, methodDef);
 
+		/**
+		 * <aop:before method="" pointcut-ref=""/> 返回 pointcut-ref 字符串
+		 * <aop:before method="" pointcut=""/> 返回 pointcut 表达式的 BeanDefinition
+		 */
 		Object pointcut = parsePointcutProperty(adviceElement, parserContext);
 		if (pointcut instanceof BeanDefinition) {
 			cav.addIndexedArgumentValue(POINTCUT_INDEX, pointcut);
@@ -418,6 +436,8 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 
 	/**
 	 * Gets the advice implementation class corresponding to the supplied {@link Element}.
+	 *
+	 * 获取通知类型
 	 */
 	private Class<?> getAdviceClass(Element adviceElement, ParserContext parserContext) {
 		String elementName = parserContext.getDelegate().getLocalName(adviceElement);
@@ -447,20 +467,24 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 	 */
 	private AbstractBeanDefinition parsePointcut(Element pointcutElement, ParserContext parserContext) {
 		String id = pointcutElement.getAttribute(ID);
+		// 获取切点表达式
 		String expression = pointcutElement.getAttribute(EXPRESSION);
 
 		AbstractBeanDefinition pointcutDefinition = null;
 
 		try {
 			this.parseState.push(new PointcutEntry(id));
+			// 创建切点 beanDefinition，类型为 ConfigurableBeanFactory.SCOPE_PROTOTYPE
 			pointcutDefinition = createPointcutDefinition(expression);
 			pointcutDefinition.setSource(parserContext.extractSource(pointcutElement));
 
 			String pointcutBeanName = id;
+			// 注册切点 BeanDefinition
 			if (StringUtils.hasText(pointcutBeanName)) {
 				parserContext.getRegistry().registerBeanDefinition(pointcutBeanName, pointcutDefinition);
 			}
 			else {
+				// <aop:pointcut id="" expression=""/> 没有配置 id 则程程 ID
 				pointcutBeanName = parserContext.getReaderContext().registerWithGeneratedName(pointcutDefinition);
 			}
 
