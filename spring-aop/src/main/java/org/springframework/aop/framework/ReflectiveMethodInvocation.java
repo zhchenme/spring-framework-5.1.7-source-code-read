@@ -233,7 +233,6 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 		if (this.userAttributes == null) {
 			this.userAttributes = new HashMap<>();
 		}
-
 		// Create the MethodInvocation clone.
 		try {
 			ReflectiveMethodInvocation clone = (ReflectiveMethodInvocation) clone();
