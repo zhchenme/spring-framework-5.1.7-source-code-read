@@ -54,6 +54,7 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 		// This is somewhat tricky... We have to process introductions first,
 		// but we need to preserve order in the ultimate list.
 		AdvisorAdapterRegistry registry = GlobalAdvisorAdapterRegistry.getInstance();
+		// 获取所有
 		Advisor[] advisors = config.getAdvisors();
 		List<Object> interceptorList = new ArrayList<>(advisors.length);
 		Class<?> actualClass = (targetClass != null ? targetClass : method.getDeclaringClass());
@@ -64,18 +65,22 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 				// Add it conditionally.
 				PointcutAdvisor pointcutAdvisor = (PointcutAdvisor) advisor;
 				if (config.isPreFiltered() || pointcutAdvisor.getPointcut().getClassFilter().matches(actualClass)) {
+					// 获取方法匹配器
 					MethodMatcher mm = pointcutAdvisor.getPointcut().getMethodMatcher();
 					boolean match;
 					if (mm instanceof IntroductionAwareMethodMatcher) {
 						if (hasIntroductions == null) {
 							hasIntroductions = hasMatchingIntroductions(advisors, actualClass);
 						}
+						// 对目标方法进行匹配
 						match = ((IntroductionAwareMethodMatcher) mm).matches(method, actualClass, hasIntroductions);
 					}
 					else {
+						// 对目标方法进行匹配
 						match = mm.matches(method, actualClass);
 					}
 					if (match) {
+						// 根据通知获取方法拦截器数组，比如一个切面设置了多个方法，使用不同的通知对方法进行织入
 						MethodInterceptor[] interceptors = registry.getInterceptors(advisor);
 						if (mm.isRuntime()) {
 							// Creating a new object instance in the getInterceptors() method
@@ -90,6 +95,7 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 					}
 				}
 			}
+			// 处理 IntroductionAdvisor 类型的通知器
 			else if (advisor instanceof IntroductionAdvisor) {
 				IntroductionAdvisor ia = (IntroductionAdvisor) advisor;
 				if (config.isPreFiltered() || ia.getClassFilter().matches(actualClass)) {

@@ -70,6 +70,7 @@ public class BeanFactoryAdvisorRetrievalHelper {
 		if (advisorNames == null) {
 			// Do not initialize FactoryBeans here: We need to leave all regular beans
 			// uninitialized to let the auto-proxy creator apply to them!
+			// 获取所有通知的 beanName，并进行缓存
 			advisorNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 					this.beanFactory, Advisor.class, true, false);
 			this.cachedAdvisorBeanNames = advisorNames;
@@ -81,6 +82,7 @@ public class BeanFactoryAdvisorRetrievalHelper {
 		List<Advisor> advisors = new ArrayList<>();
 		for (String name : advisorNames) {
 			if (isEligibleBean(name)) {
+				// advisor bean 正在创建则跳过
 				if (this.beanFactory.isCurrentlyInCreation(name)) {
 					if (logger.isTraceEnabled()) {
 						logger.trace("Skipping currently created advisor '" + name + "'");
@@ -88,6 +90,7 @@ public class BeanFactoryAdvisorRetrievalHelper {
 				}
 				else {
 					try {
+						// 获取通知 bean，加入到 advisors 集合中
 						advisors.add(this.beanFactory.getBean(name, Advisor.class));
 					}
 					catch (BeanCreationException ex) {

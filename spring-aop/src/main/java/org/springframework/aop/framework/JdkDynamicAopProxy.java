@@ -120,6 +120,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 		}
 		Class<?>[] proxiedInterfaces = AopProxyUtils.completeProxiedInterfaces(this.advised, true);
 		findDefinedEqualsAndHashCodeMethods(proxiedInterfaces);
+		// 创建代理，重点在 invoke 方法
 		return Proxy.newProxyInstance(classLoader, proxiedInterfaces, this);
 	}
 
@@ -182,6 +183,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 
 			Object retVal;
 
+			// expose-proxy 属性设置为 true，
 			if (this.advised.exposeProxy) {
 				// Make invocation available if necessary.
 				oldProxy = AopContext.setCurrentProxy(proxy);
@@ -199,6 +201,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 
 			// Check whether we have any advice. If we don't, we can fallback on direct
 			// reflective invocation of the target, and avoid creating a MethodInvocation.
+			// 通知链为空通过反射直接执行方法
 			if (chain.isEmpty()) {
 				// We can skip creating a MethodInvocation: just invoke the target directly
 				// Note that the final invoker must be an InvokerInterceptor so we know it does
@@ -210,11 +213,13 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 				// We need to create a method invocation...
 				invocation = new ReflectiveMethodInvocation(proxy, target, method, args, targetClass, chain);
 				// Proceed to the joinpoint through the interceptor chain.
+				// 执行通知链与目标方法
 				retVal = invocation.proceed();
 			}
 
 			// Massage return value if necessary.
 			Class<?> returnType = method.getReturnType();
+			// 返回当前代理对象
 			if (retVal != null && retVal == target &&
 					returnType != Object.class && returnType.isInstance(proxy) &&
 					!RawTargetAccess.class.isAssignableFrom(method.getDeclaringClass())) {

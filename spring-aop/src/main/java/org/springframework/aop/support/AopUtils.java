@@ -226,6 +226,7 @@ public abstract class AopUtils {
 			return false;
 		}
 
+		// 获取匹配器
 		MethodMatcher methodMatcher = pc.getMethodMatcher();
 		if (methodMatcher == MethodMatcher.TRUE) {
 			// No need to iterate the methods if we're matching any method anyway...
@@ -311,6 +312,7 @@ public abstract class AopUtils {
 		List<Advisor> eligibleAdvisors = new ArrayList<>();
 		// 遍历所有通知
 		for (Advisor candidate : candidateAdvisors) {
+			// 查找 IntroductionAdvisor 类型切可以可以执行的通知
 			if (candidate instanceof IntroductionAdvisor && canApply(candidate, clazz)) {
 				eligibleAdvisors.add(candidate);
 			}
@@ -321,6 +323,7 @@ public abstract class AopUtils {
 				// already processed
 				continue;
 			}
+			// 普通类型的通知
 			if (canApply(candidate, clazz, hasIntroductions)) {
 				eligibleAdvisors.add(candidate);
 			}

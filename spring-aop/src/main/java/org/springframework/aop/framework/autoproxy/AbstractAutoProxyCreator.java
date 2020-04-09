@@ -296,6 +296,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		if (bean != null) {
 			Object cacheKey = getCacheKey(bean.getClass(), beanName);
 			if (this.earlyProxyReferences.remove(cacheKey) != bean) {
+				// 生成代理 bean 对象
 				return wrapIfNecessary(bean, beanName, cacheKey);
 			}
 		}
@@ -338,6 +339,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		if (Boolean.FALSE.equals(this.advisedBeans.get(cacheKey))) {
 			return bean;
 		}
+		// Pointcut、Advice、Advisor 等接口实现类跳过不生成代理，
 		if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
 			this.advisedBeans.put(cacheKey, Boolean.FALSE);
 			return bean;
@@ -352,6 +354,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			Object proxy = createProxy(
 					bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
 			this.proxyTypes.put(cacheKey, proxy.getClass());
+			// 返回代理对象
 			return proxy;
 		}
 
@@ -461,6 +464,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			}
 		}
 
+		// 对 Advice 进行包装，包装成 Advisor
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
 		proxyFactory.addAdvisors(advisors);
 		proxyFactory.setTargetSource(targetSource);
@@ -471,6 +475,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			proxyFactory.setPreFiltered(true);
 		}
 
+		// 创建代理
 		return proxyFactory.getProxy(getProxyClassLoader());
 	}
 

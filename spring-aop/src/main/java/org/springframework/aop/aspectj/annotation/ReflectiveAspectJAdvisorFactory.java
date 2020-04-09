@@ -112,6 +112,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 
 	@Override
 	public List<Advisor> getAdvisors(MetadataAwareAspectInstanceFactory aspectInstanceFactory) {
+		// 获取切面 class 和切面 name
 		Class<?> aspectClass = aspectInstanceFactory.getAspectMetadata().getAspectClass();
 		String aspectName = aspectInstanceFactory.getAspectMetadata().getAspectName();
 		validate(aspectClass);
@@ -122,6 +123,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 				new LazySingletonAspectInstanceFactoryDecorator(aspectInstanceFactory);
 
 		List<Advisor> advisors = new ArrayList<>();
+		// getAdvisorMethods 返回不包含 @Pointcut 注解的方法
 		for (Method method : getAdvisorMethods(aspectClass)) {
 			Advisor advisor = getAdvisor(method, lazySingletonAspectInstanceFactory, advisors.size(), aspectName);
 			if (advisor != null) {
