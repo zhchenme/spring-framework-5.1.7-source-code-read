@@ -338,7 +338,6 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 			this.parseState.push(new AdviceEntry(parserContext.getDelegate().getLocalName(adviceElement)));
 
 			// create the method factory bean
-			// 创建一个 BeanFactory
 			RootBeanDefinition methodDefinition = new RootBeanDefinition(MethodLocatingFactoryBean.class);
 			// 切面 bean（类）
 			methodDefinition.getPropertyValues().add("targetBeanName", aspectName);
@@ -353,8 +352,7 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 			aspectFactoryDef.getPropertyValues().add("aspectBeanName", aspectName);
 			aspectFactoryDef.setSynthetic(true);
 
-			// register the pointcut
-			// 创建通知 BeanDefinition 并注册切点
+			// 创建通知 BeanDefinition，此时已明确通知类型
 			AbstractBeanDefinition adviceDef = createAdviceDefinition(
 					adviceElement, parserContext, aspectName, order, methodDefinition, aspectFactoryDef,
 					beanDefinitions, beanReferences);
@@ -362,6 +360,7 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 			// configure the advisor
 			RootBeanDefinition advisorDefinition = new RootBeanDefinition(AspectJPointcutAdvisor.class);
 			advisorDefinition.setSource(parserContext.extractSource(adviceElement));
+			// 将上面创建的 adviceDef 注入到 advisorDefinition 中
 			advisorDefinition.getConstructorArgumentValues().addGenericArgumentValue(adviceDef);
 			// <aop:aspect ref="" order="" />，控制切面方法优先级
 			if (aspectElement.hasAttribute(ORDER_PROPERTY)) {
@@ -479,12 +478,12 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 			pointcutDefinition.setSource(parserContext.extractSource(pointcutElement));
 
 			String pointcutBeanName = id;
-			// 注册切点 BeanDefinition
+			// 注册切点 BeanDefinition 到 beanFactory 中
 			if (StringUtils.hasText(pointcutBeanName)) {
 				parserContext.getRegistry().registerBeanDefinition(pointcutBeanName, pointcutDefinition);
 			}
 			else {
-				// <aop:pointcut id="" expression=""/> 没有配置 id 则程程 ID
+				// <aop:pointcut id="" expression=""/> 没有配置 id 先生成 beanName 在注册到 beanFactory 中
 				pointcutBeanName = parserContext.getReaderContext().registerWithGeneratedName(pointcutDefinition);
 			}
 
