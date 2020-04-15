@@ -6,6 +6,11 @@
     - [bean 创建流程分析](document/ioc/5.bean%20创建流程分析.md)
     - [getBean 流程分析](document/ioc/6.getBean%20流程分析.md)
 
+ - AOP
+    - [解析 aop 配置信息](document/aop/1.解析aop配置信息.md)
+
+### IoC 导图
+
 #### BeanDefinition 初始化与注册
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20200327192621819.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2NvZGVqYXM=,size_16,color_FFFFFF,t_70)
 #### IoC 启动流程
