@@ -312,7 +312,7 @@ public abstract class AopUtils {
 		List<Advisor> eligibleAdvisors = new ArrayList<>();
 		// 遍历所有通知
 		for (Advisor candidate : candidateAdvisors) {
-			// 查找 IntroductionAdvisor 类型切可以可以执行的通知
+			// 查找 IntroductionAdvisor 类型切可以执行的通知
 			if (candidate instanceof IntroductionAdvisor && canApply(candidate, clazz)) {
 				eligibleAdvisors.add(candidate);
 			}

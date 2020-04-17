@@ -1874,6 +1874,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		Object wrappedBean = bean;
 		if (mbd == null || !mbd.isSynthetic()) {
 			// 前置处理，用户可以实现 BeanPostProcessor 进行自定义业务处理
+			/**
+			 * TODO AOP 入口 @see org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator.postProcessAfterInitialization
+			 * TODO 原因是在解析 AOP XML 配置信息的时候注入了一个 org.springframework.aop.aspectj.autoproxy.AspectJAwareAdvisorAutoProxyCreator 类型的 BeanDefinition，在创建 bean 的时候，由于 Ordered 优先级，该 bean 会有优先创建，
+			 * TODO AspectJAwareAdvisorAutoProxyCreator 本身又继承自 BeanPostProcessor，所以代理的逻辑可以执行
+			 */
 			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
 		}
 

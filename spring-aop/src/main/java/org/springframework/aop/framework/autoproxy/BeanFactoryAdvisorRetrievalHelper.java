@@ -90,7 +90,7 @@ public class BeanFactoryAdvisorRetrievalHelper {
 				}
 				else {
 					try {
-						// 获取通知 bean，加入到 advisors 集合中
+						// 获取通知 bean，加入到 advisors 集合中，这里通知才会转化成 bean
 						advisors.add(this.beanFactory.getBean(name, Advisor.class));
 					}
 					catch (BeanCreationException ex) {

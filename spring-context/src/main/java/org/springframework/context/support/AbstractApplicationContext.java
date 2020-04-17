@@ -620,6 +620,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				/**
 				 * 类似上一步，只不过是注册所有的 BeanPostProcessor，只注册并未执行
 				 * 并默认注册了一个 ApplicationListenerDetector，当 Bean 实例化时调用，这个 ApplicationListenerDetector 不是在上面 prepareBeanFactory 方法中注册过了吗？？
+				 * TODO AOP XML 配置转换成 beanDefinition 后会在这一步转换成 bean org.springframework.aop.aspectj.autoproxy.AspectJAwareAdvisorAutoProxyCreator
+				 * TODO 因此并不是所有 BeanPostProcessor 都一定 Spring 或者用户手动定义的，有的是容齐初始化期间自动注入 beanDefinition，这里统一创建 bean
 				 */
 				registerBeanPostProcessors(beanFactory);
 
