@@ -8,6 +8,8 @@
 
  - AOP
     - [解析 aop 配置信息](document/aop/1.解析aop配置信息.md)
+    - [aop 代理类入口分析.md](document/aop/2.AOP代理类入口分析.md)
+    - [创建代理 bean.md](document/aop/3.创建代理bean.md)
 
 ### IoC 导图
 
